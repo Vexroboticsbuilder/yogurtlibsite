@@ -131,7 +131,7 @@
         input[type="number"] { background: #1a1a1a; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box;}
         label { font-size: 0.65rem; text-transform: uppercase; color: #555; display: block; margin-bottom: 5px; font-weight: 700; }
 
-        #wall-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://i.ibb.co/fd3SNmnN/Override-walls-rotated.png'); background-size: cover; background-repeat: no-repeat; background-position: center; pointer-events: none; z-index: 1; }
+        #wall-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('../../assets/fields/Override_Walls_YogurtLib.png'); background-size: cover; background-repeat: no-repeat; background-position: center; pointer-events: none; z-index: 1; }
         #path-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
         #robot { position: absolute; border: 2px solid var(--accent); background: rgba(180, 82, 255, 0.3); transform-origin: center; z-index: 10; pointer-events: none; }
         #robot::after { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 50%; background: white; transform: translateX(-50%); }
@@ -221,11 +221,11 @@
     function setField(type) {
         const container = document.getElementById('field-container');
         if(type === 'match') {
-            container.style.backgroundImage = "../../assets/fields/Override_H2H_No_Walls_YogurtLib.png";
+            container.style.backgroundImage = "url('../../assets/fields/Override_H2H_No_Walls_YogurtLib.png')";
             document.getElementById('btn-match').classList.add('active');
             document.getElementById('btn-skills').classList.remove('active');
         } else {
-            container.style.backgroundImage = "../../assets/fields/Override_Skills_No_Walls_YogurtLib.png";
+            container.style.backgroundImage = "url('../../assets/fields/Override_Skills_No_Walls_YogurtLib.png')";
             document.getElementById('btn-skills').classList.add('active');
             document.getElementById('btn-match').classList.remove('active');
         }
