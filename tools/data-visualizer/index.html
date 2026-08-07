@@ -29,7 +29,7 @@
         }
       
         .site-header, .site-footer { align-self: stretch; width: 100%; }
-        
+
         .dashboard {
             display: flex;
             flex-direction: row;
@@ -62,7 +62,7 @@
             position: absolute;
             top: 50%; left: 50%;
             width: 96.5%; height: 96.5%;
-            transform: translate(-50%, -50%) rotate(-90deg);
+            transform: translate(-50%, -50%);
             background-size: contain; background-repeat: no-repeat;
             z-index: 2;
         }
@@ -221,11 +221,11 @@
     function setField(type) {
         const container = document.getElementById('field-container');
         if(type === 'match') {
-            container.style.backgroundImage = "url('https://i.ibb.co/6Rg6kPWj/Override-H2-H-No-walls.png')";
+            container.style.backgroundImage = "../../assets/fields/Override_H2H_No_Walls_YogurtLib.png";
             document.getElementById('btn-match').classList.add('active');
             document.getElementById('btn-skills').classList.remove('active');
         } else {
-            container.style.backgroundImage = "url('https://i.ibb.co/7N8VybfG/Override-Skills-No-walls.png')";
+            container.style.backgroundImage = "../../assets/fields/Override_Skills_No_Walls_YogurtLib.png";
             document.getElementById('btn-skills').classList.add('active');
             document.getElementById('btn-match').classList.remove('active');
         }

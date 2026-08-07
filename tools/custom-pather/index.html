@@ -325,7 +325,6 @@
             if(img.complete) {
                 cacheCtx.save();
                 cacheCtx.translate(fieldOffset + 300, fieldOffset + 300);
-                cacheCtx.rotate(-Math.PI / 2);
                 cacheCtx.drawImage(img, -300, -300, 600, 600);
                 cacheCtx.restore();
             }
