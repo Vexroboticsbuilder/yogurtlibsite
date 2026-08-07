@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting Started — Custom Pather · 210E</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  article { max-width: 720px; margin: 0 auto; padding: 60px 32px 80px; }
+  .back-link { display: inline-block; margin-bottom: 24px; color: var(--muted); font-family: var(--font-mono); font-size: 0.78rem; }
+  .back-link:hover { color: var(--text); }
+  article h1 { font-family: var(--font-display); font-size: 1.9rem; margin: 12px 0 6px; }
+  article h2 { font-family: var(--font-display); font-size: 1.15rem; margin: 40px 0 12px; border-top: 1px solid var(--panel-border); padding-top: 28px; }
+  article p, article li { color: #cfcfd6; line-height: 1.7; font-size: 0.92rem; }
+  article ul { padding-left: 20px; }
+  article code {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent);
+  }
+  kbd {
+    background: #1a1a1e; border: 1px solid #333; border-radius: 4px;
+    padding: 1px 6px; font-family: var(--font-mono); font-size: 0.8em;
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
+  <nav class="site-nav">
+    <a href="../index.html">Home</a>
+    <a href="../tools/custom-pather/index.html">Custom Pather</a>
+    <a href="../tools/data-visualizer/index.html">Data Visualizer</a>
+    <a href="index.html" class="active">Docs</a>
+  </nav>
+</header>
+
+<article>
+  <a class="back-link" href="index.html">← Docs</a>
+  <span class="eyebrow">Custom Pather</span>
+  <h1>Getting started</h1>
+  <p>Custom Pather draws bezier autonomous paths on the competition field and exports them as coordinate arrays you can paste into your code.</p>
+
+  <h2>Placing points</h2>
+  <ul>
+    <li>Click anywhere on the field to drop a waypoint.</li>
+    <li>Hold <kbd>Shift</kbd> while clicking to snap the new segment's handles to a straight line at 45° increments from the last point.</li>
+    <li>Hold <kbd>Ctrl</kbd> and click an existing waypoint to delete it.</li>
+    <li>Double-click a waypoint or a segment to straighten that segment's curve.</li>
+  </ul>
+
+  <h2>Editing curves</h2>
+  <p>Each waypoint has two curve handles (cyan and orange). Drag them to shape the bezier curve between points. Toggle handle visibility with the <code>Handles</code> button.</p>
+
+  <h2>Fine-tuning</h2>
+  <ul>
+    <li><b>Last Pt Precision</b> — type exact X/Y inches for the most recently placed point.</li>
+    <li><b>Resolution slider</b> — controls point spacing along the path. Click a segment first to set its resolution individually, otherwise it applies globally.</li>
+    <li><b>Robot dimensions</b> — set width/length in inches to preview the robot's footprint as it travels the path.</li>
+  </ul>
+
+  <h2>Exporting and importing</h2>
+  <p>Click <code>Copy Path</code> to copy the generated coordinate list. Paste previously exported path code into the text box and click <code>Load</code> to restore it, including field mode, colors, and per-segment resolution.</p>
+
+  <h2>Other controls</h2>
+  <ul>
+    <li><code>Mirror X</code> / <code>Mirror Y</code> — flip the whole path across an axis.</li>
+    <li><code>Undo</code> / <code>Redo</code> — step back and forward through edits (also <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>).</li>
+    <li><code>Mode</code> — switch between MATCH and SKILLS field backgrounds.</li>
+    <li><code>Snapshot</code> — download a PNG of the current field and path.</li>
+  </ul>
+</article>
+
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Docs / Getting Started</span>
+</footer>
+
+</body>
+</html>

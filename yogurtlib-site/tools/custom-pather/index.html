@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Custom Pather · 210E</title>
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        /* UI THEMEING */
+        :root { 
+            --panel: #222222; 
+            --accent-on: #8c52ff;
+            --accent-off: #2c1952;
+            --start: #00ff00; 
+            --end: #ff0000;   
+            --handle1: #00ffff; 
+            --handle2: #ff9900; 
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            background: var(--bg); color: var(--text); margin: 0; padding: 0; 
+        }
+
+        .site-header, .site-footer { align-self: stretch; width: 100%; }
+
+        .tool-body { display: flex; flex-direction: column; align-items: center; padding: 20px; width: 100%; }
+
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        #canvas-container { 
+            position: relative; border: 1px solid #444; border-radius: 4px; 
+            box-shadow: 0 0 30px rgb(255, 255, 255); background: #000; line-height: 0; 
+        }
+
+        canvas { cursor: crosshair; display: block; z-index: 2; position: relative; }
+
+        .vertical-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 622px;
+            background: var(--panel);
+            padding: 0 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        #ghostSlider {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: 12px;
+            height: 520px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .slider-label-vertical {
+            font-size: 0.7rem;
+            color: #888;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            white-space: nowrap;
+        }
+
+        .controls { 
+            margin-top: 35px; background: var(--panel); padding: 20px; 
+            border-radius: 12px; width: 600px; box-sizing: border-box; border: 1px solid #222; 
+        }
+
+        .manual-entry { 
+            display: flex; gap: 10px; margin-bottom: 15px; background: #1a1a1a; 
+            padding: 10px; border-radius: 8px; align-items: center; border: 1px solid #333; 
+        }
+        
+        .coord-input { 
+            width: 60px; background: #000; border: 1px solid var(--accent); 
+            color: #fff; padding: 5px; border-radius: 4px; font-family: 'Courier New'; 
+        }
+
+        .point-list { 
+            max-height: 220px; overflow-y: auto; border: 1px solid #333; padding: 10px; 
+            margin-top: 10px; font-family: 'Courier New', monospace; font-size: 11px; 
+            background: #000; color: #fff; border-radius: 4px; white-space: pre; 
+            line-height: 1.4; border-top: 2px solid var(--accent); 
+        }
+
+        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        
+        button { 
+            flex: 1; min-width: 90px; padding: 10px; cursor: pointer; 
+            background: #fff; color: #000; border: none; border-radius: 6px; 
+            font-weight: bold; transition: 0.2s; font-size: 0.8rem; 
+        }
+
+        button:hover { filter: brightness(1.2); }
+        .secondary-btn { background: #222; color: #fff; border: 1px solid #444; }
+
+        .toggle-on { 
+            background: var(--accent-on) !important; 
+            color: white !important; 
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.2), 0 0 10px rgba(180, 82, 255, 0.3);
+        }
+        .toggle-off { 
+            background: var(--accent-off) !important; 
+            color: #777 !important; 
+            border: 1px solid #23153f;
+        }
+
+        .input-box { 
+            width: 100%; background: #000; border: 1px solid #333; color: #fff; 
+            padding: 8px; border-radius: 4px; margin-bottom: 8px; 
+            font-family: 'Courier New', monospace; box-sizing: border-box; 
+        }
+
+        .legend { display: flex; gap: 15px; font-size: 0.75rem; margin-bottom: 10px; color: #aaa; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .slider-sub { font-size: 0.65rem; color: #888; display: block; margin-bottom: 4px; }
+			em { color:green; }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
+  <nav class="site-nav">
+    <a href="../../index.html">Home</a>
+    <a href="../custom-pather/index.html" class="active">Custom Pather</a>
+    <a href="../data-visualizer/index.html">Data Visualizer</a>
+    <a href="../../docs/index.html">Docs</a>
+  </nav>
+</header>
+
+<div class="tool-body">
+    <div class="main-layout">
+        <div id="canvas-container">
+            <canvas id="field" width="622" height="622"></canvas>
+        </div>
+        
+        <div class="vertical-slider-container">
+            <span class="slider-label-vertical">ROBOT</span>
+            <input type="range" id="ghostSlider" min="0" max="1" step="0.001" value="0"">
+            <span class="slider-label-vertical" style="margin-top:15px; margin-bottom:0;">PATH</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:var(--start)"></div> Start</div>
+            <div class="legend-item"><div class="dot" style="background:#fff"></div> Waypoint</div>
+            <div class="legend-item"><div class="dot" style="background:var(--end)"></div> End</div>
+            <div class="legend-item"><div class="dot" style="background:var(--handle1)"></div> Handle 1</div>
+            <div class="legend-item"><div class="dot" style="background:var(--handle2)"></div> Handle 2</div>
+        </div>
+        
+        <div class="odom-reset"><span>START POSE:</span><b id="odomStart">{0.0, 0.0}</b></div>
+
+        <div class="manual-entry">
+            <label style="font-size:0.7rem; color:#888; font-weight:bold;">LAST PT PRECISION:</label>
+            <label style="font-size:0.7rem; color:#888;">X:</label><input type="number" step="0.1" class="coord-input" id="manualX" oninput="manualAdjust()">
+            <label style="font-size:0.7rem; color:#888;">Y:</label><input type="number" step="0.1" class="coord-input" id="manualY" oninput="manualAdjust()">
+            <span style="font-size: 10px; color: #555;">(Inches)</span>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+            <textarea class="input-box" id="importArea" placeholder="Paste path code here..." style="height:60px;"></textarea>
+            <button class="secondary-btn" style="flex:0; min-width:80px;" onclick="smartImport()">Load</button>
+        </div>
+        
+        <div style="background:#1a1a1a; padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid #333;">
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888;">
+                <span>Pts: <b id="pointCountDisplay" style="color:#fff">0</b></span>
+                <span>Dist: <b id="distDisplay" style="color:#fff">0.0"</b></span>
+                <span>Res: <b id="resVal" style="color:#fff">5.0</b>" <span id="resTarget">(Global)</span></span>
+                <span>Mode: <b id="modeText" style="color:var(--accent)">MATCH</b></span>
+            </div>
+            <input type="range" id="resSlider" min="0.1" max="12" step="0.1" value="5.0" oninput="updateRes(this.value)" style="width:100%; accent-color:var(--accent);">
+            
+            <div style="margin-top:10px; border-top: 1px solid #333; padding-top:10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex-grow: 1;">
+                    <span class="slider-sub">ROBOT DIMENSIONS</span>
+                </div>
+                <div style="text-align: right;">
+                    <span class="slider-sub">W" x L"</span>
+                    <input type="number" id="ghostWidth" value="13.0" step="0.25" oninput="renderRobot();" class="coord-input">
+                    <input type="number" id="ghostLength" value="17.5" step="0.25" oninput="renderRobot();" class="coord-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button id="copyBtn" onclick="copyPath()" style="background: var(--accent); color: #fff;">Copy Path</button>
+            <button class="secondary-btn" onclick="cycleColor()">Cycle Color</button>
+            <button class="secondary-btn" onclick="mirrorPath('X')">Mirror X</button>
+            <button class="secondary-btn" onclick="mirrorPath('Y')">Mirror Y</button>
+            <button class="secondary-btn" onclick="undoAction()">Undo</button>
+            <button class="secondary-btn" onclick="redoAction()">Redo</button>
+            <button class="secondary-btn" onclick="removeLastPoint()">Remove Last</button>
+            <button id="handleToggle" class="toggle-on" onclick="toggleControls()">Handles</button>
+            <button id="arrowToggle" class="toggle-on" onclick="toggleArrows()">Arrows</button>
+            <button id="ghostToggle" class="toggle-on" onclick="toggleGhost()">Robot</button>
+            <button class="secondary-btn" onclick="toggleMode()">Mode</button>
+            <button class="secondary-btn" onclick="downloadImage()">Snapshot</button>
+            <button class="secondary-btn" onclick="clearPath()">Clear All</button>
+        </div>
+
+        <div id="points" class="point-list">Click field to start. Last Updated 5/30 for OVERRIDE and rethemed to Extraterrestrial</div>
+    </div>
+</div>
+
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Custom Pather</span>
+</footer>
+
+    <script>
+        const canvas = document.getElementById('field');
+        const ctx = canvas.getContext('2d');
+        const odomLabel = document.getElementById('odomStart');
+        const countDisplay = document.getElementById('pointCountDisplay');
+        const distDisplay = document.getElementById('distDisplay');
+        const resLabel = document.getElementById('resVal');
+        const resTarget = document.getElementById('resTarget');
+        const inX = document.getElementById('manualX');
+        const inY = document.getElementById('manualY');
+        const ghostSlider = document.getElementById('ghostSlider');
+        const ghostWInput = document.getElementById('ghostWidth');
+        const ghostLInput = document.getElementById('ghostLength');
+        
+        const imgSkills = new Image();
+        const imgMatch = new Image();
+        const imgWalls = new Image();
+
+        let imagesLoaded = 0;
+        const totalImages = 3;
+
+        function onImageLoaded() {
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) render();
+        }
+
+        function loadImageViaBlob(img, url) {
+            fetch(url)
+                .then(r => r.blob())
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    img.onload = () => { onImageLoaded(); };
+                    img.onerror = () => { onImageLoaded(); }; // still render even if one fails
+                    img.src = blobUrl;
+                })
+                .catch(() => {
+                    // fallback: load directly (will taint canvas but at least shows)
+                    img.onload = onImageLoaded;
+                    img.src = url;
+                });
+        }
+
+        loadImageViaBlob(imgSkills, 'https://i.ibb.co/7N8VybfG/Override-Skills-No-walls.png');
+        loadImageViaBlob(imgMatch,  'https://i.ibb.co/6Rg6kPWj/Override-H2-H-No-walls.png');
+        loadImageViaBlob(imgWalls,  'https://i.ibb.co/fd3SNmnN/Override-walls-rotated.png');
+
+        const colorList = ['#8c52ff', '#ffffff', '#FF899F', '#49B6FF', '#2CC259', '#FF3949' ];
+        let waypoints = []; let segments = []; let headingPath = []; let globalResolution = 5.0; 
+        let draggingIdx = -1; let dragType = null; 
+        let isSkills = false; let showAdjustors = true; let showArrows = true; let showGhost = true;
+        let shiftPressed = false; let ctrlPressed = false;
+        
+        let historyStack = [];
+        let redoStack = [];
+        let selectedSegment = -1;
+
+        const totalFieldInches = 141.0;
+        const canvasSize = 600;
+        const fieldOffset = 11; // (622 - 600) / 2, centers the 600px field in the 622px canvas
+        const pixelsPerInch = canvasSize / totalFieldInches;
+
+        // Add a cached path canvas outside render()
+        let pathCached = false;
+        let cachedPathCanvas = null;
+
+        // rAF-based rendering: slider sets a dirty flag, rAF loop draws once per frame
+        let robotDirty = false;
+        let rafId = null;
+
+        ghostSlider.addEventListener('input', () => {
+            robotDirty = true;
+            if (!rafId) rafId = requestAnimationFrame(rafRenderRobot);
+        }, { passive: true });
+
+        function rafRenderRobot() {
+            rafId = null;
+            if (robotDirty) {
+                robotDirty = false;
+                renderRobot();
+            }
+        }
+
+        let lastRenderTime = 0;
+        const RENDER_THROTTLE = 16; // ~60fps (kept for non-slider calls)
+
+        function cacheStaticPath() {
+            if (!cachedPathCanvas) {
+                cachedPathCanvas = document.createElement('canvas');
+                cachedPathCanvas.width = 622;
+                cachedPathCanvas.height = 622;
+            }
+            
+            const cacheCtx = cachedPathCanvas.getContext('2d');
+            cacheCtx.clearRect(0, 0, 622, 622);
+            
+            // Draw walls first at the very bottom, full 622x622
+            if(imgWalls.complete && imgWalls.naturalWidth > 0) {
+                cacheCtx.drawImage(imgWalls, 0, 0, 622, 622);
+            }
+
+            // Draw field image on top of walls, offset to center in the larger canvas
+            const img = isSkills ? imgSkills : imgMatch;
+            if(img.complete) {
+                cacheCtx.save();
+                cacheCtx.translate(fieldOffset + 300, fieldOffset + 300);
+                cacheCtx.rotate(-Math.PI / 2);
+                cacheCtx.drawImage(img, -300, -300, 600, 600);
+                cacheCtx.restore();
+            }
+            
+            // Draw all segments
+            segments.forEach((seg, idx) => {
+                cacheCtx.strokeStyle = waypoints[idx].color || '#8c52ff';
+                cacheCtx.lineWidth = (selectedSegment === idx) ? 6 : 3;
+                if(selectedSegment === idx) {
+                    cacheCtx.shadowBlur = 10;
+                    cacheCtx.shadowColor = cacheCtx.strokeStyle;
+                }
+                cacheCtx.beginPath();
+                seg.forEach((p, i) => {
+                    const c = fromInches(p.x, p.y);
+                    if(i===0) cacheCtx.moveTo(c.x,c.y);
+                    else cacheCtx.lineTo(c.x,c.y);
+                });
+                cacheCtx.stroke();
+                cacheCtx.shadowBlur = 0;
+            });
+            
+            // Draw arrows — spaced every 60px of canvas distance
+            if (showArrows) {
+                segments.forEach((seg, idx) => {
+                    if (seg.length < 2) return;
+                    cacheCtx.fillStyle = waypoints[idx].color || '#8c52ff';
+
+                    const ARROW_SPACING = 60; // pixels between arrows
+                    let distAccum = ARROW_SPACING / 2; // start mid-first-interval
+
+                    for (let i = 0; i < seg.length - 1; i++) {
+                        const p1 = fromInches(seg[i].x, seg[i].y);
+                        const p2 = fromInches(seg[i + 1].x, seg[i + 1].y);
+                        const segDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                        distAccum += segDist;
+
+                        if (distAccum >= ARROW_SPACING) {
+                            distAccum -= ARROW_SPACING;
+                            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                            cacheCtx.save();
+                            cacheCtx.translate(p1.x, p1.y);
+                            cacheCtx.rotate(angle);
+                            cacheCtx.beginPath();
+                            cacheCtx.moveTo(0, 0);
+                            cacheCtx.lineTo(-10, -7);
+                            cacheCtx.lineTo(-10, 7);
+                            cacheCtx.closePath();
+                            cacheCtx.fill();
+                            cacheCtx.restore();
+                        }
+                    }
+                });
+            }
+            
+            // Draw waypoints
+            waypoints.forEach((w, i) => {
+                const wp = fromInches(w.x, w.y);
+                const cp1 = fromInches(w.cx1, w.cy1);
+                const cp2 = fromInches(w.cx2, w.cy2);
+
+                if(showAdjustors && i < waypoints.length - 1) {
+                    cacheCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    cacheCtx.setLineDash([4,4]);
+                    cacheCtx.beginPath();
+                    cacheCtx.moveTo(wp.x, wp.y);
+                    cacheCtx.lineTo(cp1.x, cp1.y);
+                    cacheCtx.stroke();
+                    const nextWp = fromInches(waypoints[i+1].x, waypoints[i+1].y);
+                    cacheCtx.beginPath();
+                    cacheCtx.moveTo(nextWp.x, nextWp.y);
+                    cacheCtx.lineTo(cp2.x, cp2.y);
+                    cacheCtx.stroke();
+                    cacheCtx.setLineDash([]);
+
+                    cacheCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--handle1').trim();
+                    cacheCtx.beginPath();
+                    cacheCtx.arc(cp1.x, cp1.y, 5, 0, Math.PI*2);
+                    cacheCtx.fill();
+                    cacheCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--handle2').trim();
+                    cacheCtx.beginPath();
+                    cacheCtx.arc(cp2.x, cp2.y, 5, 0, Math.PI*2);
+                    cacheCtx.fill();
+                }
+                cacheCtx.fillStyle = (i === 0) ? getComputedStyle(document.documentElement).getPropertyValue('--start').trim() : (i === waypoints.length - 1) ? getComputedStyle(document.documentElement).getPropertyValue('--end').trim() : '#ffffff';
+                cacheCtx.beginPath();
+                cacheCtx.arc(wp.x, wp.y, 6, 0, Math.PI*2);
+                cacheCtx.fill();
+            });
+            
+            pathCached = true;
+        }
+        function fromInches(ix, iy) { 
+            const cx = fieldOffset + ((ix + (totalFieldInches/2)) * pixelsPerInch);
+            const cy = fieldOffset + (((totalFieldInches/2) - iy) * pixelsPerInch);
+            return { x: cx, y: cy }; 
+        }
+
+        function toInches(rx, ry) { 
+            const ix = ((rx - fieldOffset) / pixelsPerInch) - (totalFieldInches/2);
+            const iy = (totalFieldInches/2) - ((ry - fieldOffset) / pixelsPerInch);
+            return { 
+                x: parseFloat(Math.min(Math.max(ix, -totalFieldInches/2), totalFieldInches/2).toFixed(2)), 
+                y: parseFloat(Math.min(Math.max(iy, -totalFieldInches/2), totalFieldInches/2).toFixed(2)) 
+            }; 
+        }
+
+        function saveState() {
+            historyStack.push(JSON.stringify(waypoints));
+            if (historyStack.length > 60) historyStack.shift();
+            redoStack = []; 
+        }
+
+        function undoAction() {
+            if (historyStack.length > 0) {
+                redoStack.push(JSON.stringify(waypoints));
+                waypoints = JSON.parse(historyStack.pop());
+                updateInputs(); processPath();
+            }
+        }
+
+        function redoAction() {
+            if (redoStack.length > 0) {
+                historyStack.push(JSON.stringify(waypoints));
+                waypoints = JSON.parse(redoStack.pop());
+                updateInputs(); processPath();
+            }
+        }
+        function cycleColor() {
+            if (selectedSegment === -1) return;
+            saveState();
+            let currentColor = waypoints[selectedSegment].color || '#8c52ff';
+            let nextIdx = (colorList.indexOf(currentColor) + 1) % colorList.length;
+            waypoints[selectedSegment].color = colorList[nextIdx];
+            processPath();
+        }
+
+        function mirrorPath(axis) {
+            if (waypoints.length === 0) return;
+            saveState();
+            waypoints = waypoints.map(wp => ({
+                ...wp,
+                x: axis === 'X' ? -wp.x : wp.x, y: axis === 'Y' ? -wp.y : wp.y,
+                cx1: axis === 'X' ? -wp.cx1 : wp.cx1, cy1: axis === 'Y' ? -wp.cy1 : wp.cy1,
+                cx2: axis === 'X' ? -wp.cx2 : wp.cx2, cy2: axis === 'Y' ? -wp.cy2 : wp.cy2
+            }));
+            updateInputs(); processPath();
+        }
+
+        function removeLastPoint() {
+            if(waypoints.length > 0) { saveState(); waypoints.pop(); updateInputs(); processPath(); }
+        }
+
+        function updateInputs() {
+            if (waypoints.length > 0) {
+                const last = waypoints[waypoints.length-1];
+                inX.value = last.x; inY.value = last.y;
+            } else { inX.value = ""; inY.value = ""; }
+        }
+
+        function manualAdjust() {
+            if (waypoints.length === 0) return;
+            const idx = waypoints.length - 1;
+            const dx = (parseFloat(inX.value) || 0) - waypoints[idx].x;
+            const dy = (parseFloat(inY.value) || 0) - waypoints[idx].y;
+            waypoints[idx].x = parseFloat(inX.value) || 0;
+            waypoints[idx].y = parseFloat(inY.value) || 0;
+            waypoints[idx].cx1 += dx; waypoints[idx].cy1 += dy;
+            waypoints[idx].cx2 += dx; waypoints[idx].cy2 += dy;
+            processPath();
+        }
+
+        window.addEventListener('keydown', (e) => { 
+            if(e.key === "Shift") shiftPressed = true; 
+            if(e.key === "Control") ctrlPressed = true;
+            if(e.key.toLowerCase() === 'c' && !ctrlPressed) cycleColor();
+            if(e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undoAction(); }
+            if(e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redoAction(); }
+        });
+
+        window.addEventListener('keyup', (e) => { 
+            if(e.key === "Shift") shiftPressed = false; 
+            if(e.key === "Control") ctrlPressed = false;
+        });
+
+        function isOverSegment(mx, my) {
+            for (let i = 0; i < segments.length; i++) {
+                for (let pt of segments[i]) {
+                    const screenPt = fromInches(pt.x, pt.y);
+                    if (Math.hypot(mx - screenPt.x, my - screenPt.y) < 10) return i; 
+                }
+            }
+            return -1;
+        }
+
+        canvas.addEventListener('dblclick', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+            // Double-click a waypoint: straighten only the segment BEFORE it (i-1 -> i)
+            for (let i = 0; i < waypoints.length; i++) {
+                const wp = fromInches(waypoints[i].x, waypoints[i].y);
+                if (Math.hypot(mouse.x - wp.x, mouse.y - wp.y) < 15) {
+                    saveState();
+                    // Straighten segment coming INTO this waypoint (i-1 -> i)
+                    if (i > 0) {
+                        const a = waypoints[i - 1], b = waypoints[i];
+                        const c1 = clampToField(a.x + (b.x - a.x) * 0.33, a.y + (b.y - a.y) * 0.33);
+                        const c2 = clampToField(a.x + (b.x - a.x) * 0.66, a.y + (b.y - a.y) * 0.66);
+                        a.cx1 = c1.x; a.cy1 = c1.y;
+                        a.cx2 = c2.x; a.cy2 = c2.y;
+                    }
+                    processPath();
+                    return;
+                }
+            }
+
+            // Double-click a segment: straighten just that segment
+            const clickedSeg = isOverSegment(mouse.x, mouse.y);
+            if (clickedSeg !== -1) {
+                saveState();
+                const a = waypoints[clickedSeg], b = waypoints[clickedSeg + 1];
+                const c1 = clampToField(a.x + (b.x - a.x) * 0.33, a.y + (b.y - a.y) * 0.33);
+                const c2 = clampToField(a.x + (b.x - a.x) * 0.66, a.y + (b.y - a.y) * 0.66);
+                a.cx1 = c1.x; a.cy1 = c1.y;
+                a.cx2 = c2.x; a.cy2 = c2.y;
+                processPath();
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            let clickedSeg = isOverSegment(mouse.x, mouse.y);
+            
+            if (clickedSeg !== -1) { 
+                selectedSegment = clickedSeg; 
+                const segRes = waypoints[selectedSegment].res || globalResolution;
+                document.getElementById('resSlider').value = segRes;
+                resLabel.innerText = segRes.toFixed(1);;
+                resTarget.innerText = `(Seg ${selectedSegment + 1})`;
+                cacheStaticPath();
+                renderRobot();
+            } else { 
+                selectedSegment = -1; 
+                resTarget.innerText = `(Global)`;
+                cacheStaticPath();
+                renderRobot();
+            }
+
+            if(ctrlPressed) {
+                for(let i=0; i<waypoints.length; i++){
+                    const wp = fromInches(waypoints[i].x, waypoints[i].y);
+                    if(Math.hypot(mouse.x - wp.x, mouse.y - wp.y) < 15) {
+                        saveState(); waypoints.splice(i, 1); updateInputs(); processPath(); return;
+                    }
+                }
+            }
+            if(showAdjustors) {
+                for(let i=0; i<waypoints.length; i++){
+                    const wp = fromInches(waypoints[i].x, waypoints[i].y);
+                    const cp1 = fromInches(waypoints[i].cx1, waypoints[i].cy1);
+                    const cp2 = fromInches(waypoints[i].cx2, waypoints[i].cy2);
+                    if(Math.hypot(mouse.x - wp.x, mouse.y - wp.y) < 15) { saveState(); draggingIdx = i; dragType = 'wp'; return; }
+                    if(i < waypoints.length - 1) {
+                        if(Math.hypot(mouse.x - cp1.x, mouse.y - cp1.y) < 12) { saveState(); draggingIdx = i; dragType = 'cp1'; return; }
+                        if(Math.hypot(mouse.x - cp2.x, mouse.y - cp2.y) < 12) { saveState(); draggingIdx = i; dragType = 'cp2'; return; }
+                    }
+                }
+            }
+            if (!shiftPressed && clickedSeg !== -1) return;
+            saveState();
+            let pos = toInches(mouse.x, mouse.y);
+            
+            if(waypoints.length > 0) {
+                const last = waypoints[waypoints.length - 1];
+                if(shiftPressed) {
+                    pos = calculateSnap(last.x, last.y, pos.x, pos.y);
+                    const c1 = clampToField(last.x + (pos.x - last.x) * 0.33, last.y + (pos.y - last.y) * 0.33);
+                    const c2 = clampToField(last.x + (pos.x - last.x) * 0.66, last.y + (pos.y - last.y) * 0.66);
+                    last.cx1 = c1.x; last.cy1 = c1.y;
+                    last.cx2 = c2.x; last.cy2 = c2.y;
+                } else {
+                    const c1 = clampToField(last.x + 5, last.y + 5);
+                    const c2 = clampToField(pos.x - 5, pos.y - 5);
+                    last.cx1 = c1.x; last.cy1 = c1.y;
+                    last.cx2 = c2.x; last.cy2 = c2.y;
+                }
+            }
+            const nc1 = clampToField(pos.x + 5, pos.y + 5);
+            const nc2 = clampToField(pos.x - 5, pos.y - 5);
+            waypoints.push({ x: pos.x, y: pos.y, cx1: nc1.x, cy1: nc1.y, cx2: nc2.x, cy2: nc2.y, color: '#8c52ff', res: globalResolution });
+            updateInputs(); processPath();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if(draggingIdx === -1) return;
+            const rect = canvas.getBoundingClientRect();
+            let pos = toInches(e.clientX - rect.left, e.clientY - rect.top);
+            if(dragType === 'cp1') { 
+                const c = clampToField(pos.x, pos.y);
+                waypoints[draggingIdx].cx1 = c.x; waypoints[draggingIdx].cy1 = c.y; 
+            } else if(dragType === 'cp2') {
+                const c = clampToField(pos.x, pos.y);
+                waypoints[draggingIdx].cx2 = c.x; waypoints[draggingIdx].cy2 = c.y; 
+            } else {
+                if(shiftPressed && draggingIdx > 0) {
+                    const last = waypoints[draggingIdx - 1];
+                    pos = calculateSnap(last.x, last.y, pos.x, pos.y);
+                    const c1 = clampToField(last.x + (pos.x - last.x) * 0.33, last.y + (pos.y - last.y) * 0.33);
+                    const c2 = clampToField(last.x + (pos.x - last.x) * 0.66, last.y + (pos.y - last.y) * 0.66);
+                    last.cx1 = c1.x; last.cy1 = c1.y;
+                    last.cx2 = c2.x; last.cy2 = c2.y;
+                }
+                const dx = pos.x - waypoints[draggingIdx].x; const dy = pos.y - waypoints[draggingIdx].y;
+                waypoints[draggingIdx].x = pos.x; waypoints[draggingIdx].y = pos.y;
+                const nc1 = clampToField(waypoints[draggingIdx].cx1 + dx, waypoints[draggingIdx].cy1 + dy);
+                const nc2 = clampToField(waypoints[draggingIdx].cx2 + dx, waypoints[draggingIdx].cy2 + dy);
+                waypoints[draggingIdx].cx1 = nc1.x; waypoints[draggingIdx].cy1 = nc1.y;
+                waypoints[draggingIdx].cx2 = nc2.x; waypoints[draggingIdx].cy2 = nc2.y;
+                updateInputs();
+            }
+            processPath();
+        });
+
+        window.addEventListener('mouseup', () => draggingIdx = -1);
+
+        function clampToField(x, y) {
+            const half = totalFieldInches / 2;
+            return {
+                x: Math.min(Math.max(x, -half), half),
+                y: Math.min(Math.max(y, -half), half)
+            };
+        }
+
+        function calculateSnap(lx, ly, x, y) {
+            const dx = x - lx; const dy = y - ly; const dist = Math.hypot(dx, dy);
+            const angle = Math.atan2(dy, dx);
+            const snappedAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+            return { x: lx + dist * Math.cos(snappedAngle), y: ly + dist * Math.sin(snappedAngle) };
+        }
+
+        function processPath() {
+            segments = []; headingPath = []; let d = 0; let p = 0;
+            if(waypoints.length < 1) { odomLabel.innerText="{0.0, 0.0}"; distDisplay.innerText="0.0\""; countDisplay.innerText="0"; cacheStaticPath();renderRobot(); return; }
+            odomLabel.innerText = `{${waypoints[0].x.toFixed(1)}, ${waypoints[0].y.toFixed(1)}}`;
+            for(let i=0; i < waypoints.length - 1; i++) {
+                const p1 = waypoints[i], p2 = waypoints[i+1];
+                const seg = [];
+                const res = p1.res || globalResolution;
+                const steps = Math.max(1, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / res));
+                for(let t=0; t<=steps; t++){
+                    let s = t/steps;
+                    let x = Math.pow(1-s, 3) * p1.x + 3 * Math.pow(1-s, 2) * s * p1.cx1 + 3 * (1-s) * s*s * p1.cx2 + s*s*s * p2.x;
+                    let y = Math.pow(1-s, 3) * p1.y + 3 * Math.pow(1-s, 2) * s * p1.cy1 + 3 * (1-s) * s*s * p1.cy2 + s*s*s * p2.y;
+                    const pt = {x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2))};
+                    if(seg.length > 0 || segments.length > 0) {
+                        const last = seg.length > 0 ? seg[seg.length-1] : segments[segments.length-1].slice(-1)[0];
+                        d += Math.hypot(pt.x - last.x, pt.y - last.y);
+                    }
+                    seg.push(pt); p++;
+                }
+                segments.push(seg);
+
+                // Build fine-resolution heading path at 0.1" steps (never changes with display res)
+                const HEADING_RES = 0.1;
+                const fineSteps = Math.max(10, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / HEADING_RES));
+                for(let t=0; t<=fineSteps; t++){
+                    if(i > 0 && t === 0) continue; // skip duplicate junction point
+                    let s = t/fineSteps;
+                    let hx = Math.pow(1-s,3)*p1.x + 3*Math.pow(1-s,2)*s*p1.cx1 + 3*(1-s)*s*s*p1.cx2 + s*s*s*p2.x;
+                    let hy = Math.pow(1-s,3)*p1.y + 3*Math.pow(1-s,2)*s*p1.cy1 + 3*(1-s)*s*s*p1.cy2 + s*s*s*p2.y;
+                    headingPath.push({x: hx, y: hy});
+                }
+            }
+            distDisplay.innerText = d.toFixed(1) + '"'; countDisplay.innerText = p; updateTextList(); cacheStaticPath(); renderRobot();
+        }
+
+        function updateTextList() {
+            let h = `<b>// [Field]: ${isSkills ? "SKILLS" : "MATCH"}</b>\n<b>// [ShowHandles]: ${showAdjustors}</b>\n<b>// [ShowArrows]: ${showArrows}</b>\n`;
+            if (waypoints.length > 0) {
+                // FIXED IMPORT: Reference comment for the absolute start pose
+                h += `<b>// [Start Pose Reference]: {X: ${waypoints[0].x.toFixed(1)}, Y: ${waypoints[0].y.toFixed(1)}}</b>\n`;
+                let startComma = (segments.length > 0) ? "," : "";
+                h += `{pose.x, pose.y}${startComma}\n`;
+            }
+
+            segments.forEach((seg, i) => {
+                let col = waypoints[i].color || '#8c52ff';
+                let res = waypoints[i].res || globalResolution;
+                h += `// Segment ${i+1} | [Color]: ${col} | [Res]: ${res}\n// [Control 1]: {${waypoints[i].cx1.toFixed(1)}, ${waypoints[i].cy1.toFixed(1)}}\n// [Control 2]: {${waypoints[i].cx2.toFixed(1)}, ${waypoints[i].cy2.toFixed(1)}}\n// [Waypoint]: {${waypoints[i+1].x.toFixed(1)}, ${waypoints[i+1].y.toFixed(1)}}\n`;
+                
+                seg.forEach((p, j) => {
+                    if (i === 0 && j === 0) return; 
+                    let isLastSegment = (i === segments.length - 1);
+                    let isLastPoint = (j === seg.length - 1);
+                    let comma = (isLastSegment && isLastPoint) ? "" : ",";
+                    h += `{${p.x.toFixed(1)}, ${p.y.toFixed(1)}}${comma}\n`;
+                });
+            });
+            document.getElementById('points').innerHTML = h;
+        }
+
+        function renderRobot() {
+            ctx.clearRect(0,0,622,622);
+            
+            // Draw cached path
+            if (pathCached && cachedPathCanvas) {
+                ctx.drawImage(cachedPathCanvas, 0, 0);
+            }
+            
+            // Draw only the robot
+            const flatPath = segments.flat();
+            if(showGhost && flatPath.length > 1) {
+                const progress = parseFloat(ghostSlider.value);
+
+                // Use headingPath (fixed 0.1" resolution) for BOTH position and heading
+                // so the robot glides smoothly regardless of display resolution
+                let p1, angle = 0;
+                if (headingPath.length > 1) {
+                    const hIdx = Math.min(Math.floor(progress * (headingPath.length - 1)), headingPath.length - 2);
+                    // Smooth sub-index interpolation for pixel-perfect position
+                    const hFrac = (progress * (headingPath.length - 1)) - hIdx;
+                    const hA = headingPath[hIdx], hB = headingPath[Math.min(hIdx + 1, headingPath.length - 1)];
+                    p1 = fromInches(hA.x + (hB.x - hA.x) * hFrac, hA.y + (hB.y - hA.y) * hFrac);
+                    // Lookahead over ~1" worth of fine steps (10 steps at 0.1")
+                    const LOOK = 10;
+                    const ahead  = Math.min(hIdx + LOOK, headingPath.length - 1);
+                    const behind = Math.max(hIdx - LOOK, 0);
+                    const pAhead  = fromInches(headingPath[ahead].x,  headingPath[ahead].y);
+                    const pBehind = fromInches(headingPath[behind].x, headingPath[behind].y);
+                    const dx = pAhead.x - pBehind.x;
+                    const dy = pAhead.y - pBehind.y;
+                    if (Math.abs(dx) >= 0.001 || Math.abs(dy) >= 0.001) angle = Math.atan2(dy, dx);
+                } else {
+                    const idx = Math.min(Math.floor(progress * (flatPath.length - 1)), flatPath.length - 2);
+                    p1 = fromInches(flatPath[idx].x, flatPath[idx].y);
+                }
+
+                const w = parseFloat(ghostWInput.value) * pixelsPerInch;
+                const l = parseFloat(ghostLInput.value) * pixelsPerInch;
+                ctx.save();
+                ctx.translate(p1.x, p1.y);
+                ctx.rotate(angle);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-l/2, -w/2, l, w);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.fillRect(-l/2, -w/2, l, w);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.beginPath();
+                ctx.moveTo(l/2, 0);
+                ctx.lineTo(l/2 - 5, -5);
+                ctx.lineTo(l/2 - 5, 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function toggleControls() { 
+            showAdjustors = !showAdjustors; 
+            document.getElementById('handleToggle').className = showAdjustors ? 'toggle-on' : 'toggle-off';
+            cacheStaticPath();
+            renderRobot();
+            updateTextList();
+        }
+        function toggleArrows() { 
+            showArrows = !showArrows; 
+            document.getElementById('arrowToggle').className = showArrows ? 'toggle-on' : 'toggle-off';
+            cacheStaticPath();
+            renderRobot();
+            updateTextList();
+        }
+        function toggleGhost() {
+            showGhost = !showGhost;
+            document.getElementById('ghostToggle').className = showGhost ? 'toggle-on' : 'toggle-off';
+            cacheStaticPath();
+            renderRobot();
+        }
+        function clearPath() { saveState(); waypoints = []; updateInputs(); processPath(); }
+        
+        function toggleMode() { 
+            isSkills = !isSkills; 
+            updateModeUI();
+            cacheStaticPath();
+            renderRobot();
+            updateTextList();
+        }
+
+        function updateModeUI() {
+            document.getElementById('modeText').innerText = isSkills ? "SKILLS" : "MATCH";
+        }
+
+        function updateRes(v) { 
+            const val = parseFloat(v);
+            if (selectedSegment !== -1) {
+                waypoints[selectedSegment].res = val;
+            } else {
+                globalResolution = val;
+                waypoints.forEach(wp => wp.res = val);
+            }
+            resLabel.innerText = val.toFixed(1); 
+            processPath(); 
+        }
+        
+        function copyPath() { 
+            const el = document.createElement('textarea'); 
+            el.value = document.getElementById('points').innerText; 
+            document.body.appendChild(el); el.select(); document.execCommand('copy'); 
+            document.body.removeChild(el); 
+            const btn = document.getElementById('copyBtn');
+            btn.innerText = "COPIED!";
+            setTimeout(() => { btn.innerText = "Copy Path"; }, 800);
+        }
+
+        function smartImport() {
+            const raw = document.getElementById('importArea').value; if(!raw) return;
+            
+            // AUTO LOAD FIELD TYPE
+            if (raw.includes("[Field]: SKILLS")) isSkills = true;
+            else if (raw.includes("[Field]: MATCH")) isSkills = false;
+            updateModeUI();
+
+            // AUTO LOAD HANDLES VISIBILITY
+            if (raw.includes("[ShowHandles]: false")) showAdjustors = false;
+            else if (raw.includes("[ShowHandles]: true")) showAdjustors = true;
+            document.getElementById('handleToggle').className = showAdjustors ? 'toggle-on' : 'toggle-off';
+
+            // AUTO LOAD ARROWS VISIBILITY
+            if (raw.includes("[ShowArrows]: false")) showArrows = false;
+            else if (raw.includes("[ShowArrows]: true")) showArrows = true;
+            document.getElementById('arrowToggle').className = showArrows ? 'toggle-on' : 'toggle-off';
+
+            // FIXED IMPORT LOGIC: Find the start pose reference from comments
+            const startRef = raw.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
+            const segmentBlocks = raw.split(/\/\/ Segment \d+/).filter(b => b.includes('Waypoint'));
+            const newWps = [];
+
+            if (startRef) {
+                // Add the initial Start Point (Pose Point)
+                newWps.push({ 
+                    x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), 
+                    cx1: 0, cy1: 0, cx2: 0, cy2: 0, // Temp controls
+                    color: '#8c52ff', res: globalResolution 
+                });
+
+                segmentBlocks.forEach((block, i) => {
+                    const wpMatch = block.match(/Waypoint\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+                    const c1Match = block.match(/Control 1\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+                    const c2Match = block.match(/Control 2\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+                    const colMatch = block.match(/\[Color\]: (#\w+)/);
+                    const resMatch = block.match(/\[Res\]: (\d+\.?\d*)/);
+
+                    if (wpMatch && c1Match && c2Match) {
+                        // Apply controls and color to the segment originating from previous point
+                        newWps[i].cx1 = parseFloat(c1Match[1]);
+                        newWps[i].cy1 = parseFloat(c1Match[2]);
+                        newWps[i].cx2 = parseFloat(c2Match[1]);
+                        newWps[i].cy2 = parseFloat(c2Match[2]);
+                        newWps[i].color = colMatch ? colMatch[1] : '#8c52ff';
+                        newWps[i].res = resMatch ? parseFloat(resMatch[1]) : globalResolution;
+
+                        // Create the next point
+                        newWps.push({
+                            x: parseFloat(wpMatch[1]), y: parseFloat(wpMatch[2]),
+                            cx1: 0, cy1: 0, cx2: 0, cy2: 0, color: '#8c52ff', res: globalResolution
+                        });
+                    }
+                });
+                
+                saveState();
+                waypoints = newWps;
+                updateInputs(); processPath();
+            }
+        }
+
+        function downloadImage() {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = 622;
+            exportCanvas.height = 622;
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // Draw cached path (field + paths + waypoints) if available
+            if (pathCached && cachedPathCanvas) {
+                exportCtx.drawImage(cachedPathCanvas, 0, 0);
+            }
+
+            // Draw robot at current slider position
+            const flatPath = segments.flat();
+            if (showGhost && flatPath.length > 1) {
+                const progress = parseFloat(ghostSlider.value);
+                const idx = Math.min(Math.floor(progress * (flatPath.length - 1)), flatPath.length - 2);
+                // Use headingPath (0.1" resolution) for smooth position + stable heading in snapshot
+                let p1, angle = 0;
+                if (headingPath.length > 1) {
+                    const hIdx = Math.min(Math.floor(progress * (headingPath.length - 1)), headingPath.length - 2);
+                    const hFrac = (progress * (headingPath.length - 1)) - hIdx;
+                    const hA = headingPath[hIdx], hB = headingPath[Math.min(hIdx + 1, headingPath.length - 1)];
+                    p1 = fromInches(hA.x + (hB.x - hA.x) * hFrac, hA.y + (hB.y - hA.y) * hFrac);
+                    const LOOK = 10;
+                    const ahead  = Math.min(hIdx + LOOK, headingPath.length - 1);
+                    const behind = Math.max(hIdx - LOOK, 0);
+                    const pAhead  = fromInches(headingPath[ahead].x,  headingPath[ahead].y);
+                    const pBehind = fromInches(headingPath[behind].x, headingPath[behind].y);
+                    const dx = pAhead.x - pBehind.x;
+                    const dy = pAhead.y - pBehind.y;
+                    if (Math.abs(dx) >= 0.001 || Math.abs(dy) >= 0.001) angle = Math.atan2(dy, dx);
+                } else {
+                    const idx = Math.min(Math.floor(progress * (flatPath.length - 1)), flatPath.length - 2);
+                    p1 = fromInches(flatPath[idx].x, flatPath[idx].y);
+                }
+                const w = parseFloat(ghostWInput.value) * pixelsPerInch;
+                const l = parseFloat(ghostLInput.value) * pixelsPerInch;
+                exportCtx.save();
+                exportCtx.translate(p1.x, p1.y);
+                exportCtx.rotate(angle);
+                exportCtx.strokeStyle = 'rgba(255,255,255,0.9)';
+                exportCtx.lineWidth = 2;
+                exportCtx.strokeRect(-l/2, -w/2, l, w);
+                exportCtx.fillStyle = 'rgba(255,255,255,0.2)';
+                exportCtx.fillRect(-l/2, -w/2, l, w);
+                exportCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                exportCtx.beginPath();
+                exportCtx.moveTo(l/2, 0);
+                exportCtx.lineTo(l/2 - 5, -5);
+                exportCtx.lineTo(l/2 - 5, 5);
+                exportCtx.closePath();
+                exportCtx.fill();
+                exportCtx.restore();
+            }
+
+            try {
+                const link = document.createElement('a');
+                link.download = 'path_snapshot.png';
+                link.href = exportCanvas.toDataURL('image/png');
+                link.click();
+            } catch(e) {
+                alert('Snapshot failed: canvas is tainted by cross-origin images. Try hosting the field images locally.');
+            }
+        }
+
+        function render() { cacheStaticPath(); renderRobot(); }
+    </script>
+</body>
+</html>

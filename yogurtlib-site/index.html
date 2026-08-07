@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>yogurtlib.com — 210E Toolkit</title>
+<meta name="description" content="Pathing, visualization, and docs tools built by 210E.">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 90px 32px 70px;
+    text-align: center;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .hero h1 {
+    position: relative;
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.1;
+    margin: 18px 0 14px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    text-shadow: 0 0 24px var(--accent-line);
+  }
+  .hero p {
+    position: relative;
+    max-width: 520px;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 64px 32px 40px; }
+
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
+  .section-head h2 { font-family: var(--font-display); font-size: 1.3rem; margin: 6px 0 0; }
+
+  .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 56px; }
+  .tool-card h3 { font-family: var(--font-display); font-size: 1.05rem; margin: 14px 0 6px; }
+  .tool-card p { color: var(--muted); font-size: 0.87rem; line-height: 1.55; margin: 0 0 16px; }
+  .tool-card .btn { width: 100%; justify-content: center; }
+  .tool-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--accent-soft); border: 1px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;
+  }
+
+  .docs-strip {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 22px 26px; flex-wrap: wrap; gap: 16px;
+  }
+  .docs-strip p { margin: 4px 0 0; color: var(--muted); font-size: 0.87rem; max-width: 420px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
+  <nav class="site-nav">
+    <a href="index.html" class="active">Home</a>
+    <a href="tools/custom-pather/index.html">Custom Pather</a>
+    <a href="tools/data-visualizer/index.html">Data Visualizer</a>
+    <a href="docs/index.html">Docs</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="field-grid"></div>
+  <span class="eyebrow">210E // yogurtlib.com</span>
+  <h1>Build the run.<br><em>Plot the path.</em></h1>
+  <p>A small toolkit for planning autonomous paths, visualizing match data, and documenting how the team's code actually works.</p>
+</section>
+
+<main>
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Tools</span>
+      <h2>Live utilities</h2>
+    </div>
+  </div>
+
+  <div class="tool-grid">
+    <div class="card tool-card">
+      <div class="tool-icon">01</div>
+      <h3>Custom Pather</h3>
+      <p>Draw bezier autonomous paths directly on the field, tune resolution per segment, and export coordinates ready to paste into code.</p>
+      <a class="btn btn-primary" href="tools/custom-pather/index.html">Open tool →</a>
+    </div>
+
+    <div class="card tool-card">
+      <div class="tool-icon">02</div>
+      <h3>Data Visualizer</h3>
+      <p>Turn match and scouting data into charts you can actually read between rounds.</p>
+      <a class="btn btn-ghost" href="tools/data-visualizer/index.html">Open tool →</a>
+    </div>
+
+    <div class="card tool-card">
+      <div class="tool-icon">03</div>
+      <h3>Your next tool</h3>
+      <p>New pages drop straight into <code>/tools/&lt;name&gt;/index.html</code> and pick up this same nav automatically.</p>
+      <a class="btn btn-ghost" href="docs/index.html">See how docs →</a>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Reference</span>
+      <h2>Documentation</h2>
+    </div>
+  </div>
+
+  <div class="docs-strip">
+    <div>
+      <span class="status-pill">DOCS</span>
+      <p>How to use each tool, import/export formats, and notes on adding new pages to this site.</p>
+    </div>
+    <a class="btn btn-primary" href="docs/index.html">Browse docs →</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Built with plain HTML/CSS/JS, hosted on GitHub Pages</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adding a Tool or Doc Page · 210E</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  article { max-width: 720px; margin: 0 auto; padding: 60px 32px 80px; }
+  .back-link { display: inline-block; margin-bottom: 24px; color: var(--muted); font-family: var(--font-mono); font-size: 0.78rem; }
+  .back-link:hover { color: var(--text); }
+  article h1 { font-family: var(--font-display); font-size: 1.9rem; margin: 12px 0 6px; }
+  article h2 { font-family: var(--font-display); font-size: 1.15rem; margin: 40px 0 12px; border-top: 1px solid var(--panel-border); padding-top: 28px; }
+  article p, article li { color: #cfcfd6; line-height: 1.7; font-size: 0.92rem; }
+  article ul { padding-left: 20px; }
+  pre {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; color: #d8d8e0;
+  }
+  code {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
+  <nav class="site-nav">
+    <a href="../index.html">Home</a>
+    <a href="../tools/custom-pather/index.html">Custom Pather</a>
+    <a href="../tools/data-visualizer/index.html">Data Visualizer</a>
+    <a href="index.html" class="active">Docs</a>
+  </nav>
+</header>
+
+<article>
+  <a class="back-link" href="index.html">← Docs</a>
+  <span class="eyebrow">Site guide</span>
+  <h1>Adding a tool or doc page</h1>
+  <p>This site is plain HTML/CSS/JS with no build step — every page is a real file you can open and edit directly.</p>
+
+  <h2>Folder layout</h2>
+  <pre>yogurtlib-site/
+├── index.html              ← homepage / hub
+├── assets/
+│   └── style.css           ← shared colors, fonts, nav, footer
+├── tools/
+│   ├── custom-pather/
+│   │   └── index.html
+│   └── data-visualizer/
+│       └── index.html
+├── docs/
+│   ├── index.html
+│   ├── getting-started.html
+│   └── site-guide.html
+└── CNAME                   ← yogurtlib.com (for GitHub Pages)</pre>
+
+  <h2>Adding a new tool</h2>
+  <ul>
+    <li>Create <code>tools/&lt;tool-name&gt;/index.html</code>.</li>
+    <li>Link the shared stylesheet: <code>&lt;link rel="stylesheet" href="../../assets/style.css"&gt;</code>.</li>
+    <li>Copy the header/footer markup from an existing tool page and add a link to your new tool in the nav on <b>every</b> page (home, other tools, docs).</li>
+    <li>Add a card for it on the homepage inside the <code>.tool-grid</code>.</li>
+  </ul>
+
+  <h2>Adding a doc page</h2>
+  <ul>
+    <li>Create <code>docs/&lt;page-name&gt;.html</code>, copying the layout from <code>getting-started.html</code>.</li>
+    <li>Link it from <code>docs/index.html</code>'s <code>.doc-list</code>.</li>
+  </ul>
+
+  <h2>Design tokens</h2>
+  <p>Colors, fonts, and shared components (nav, footer, cards, buttons) live in <code>assets/style.css</code> as CSS variables under <code>:root</code>. Change a value there and it updates everywhere.</p>
+
+  <h2>Deploying</h2>
+  <p>Push to the <code>main</code> branch on GitHub with Pages enabled, or drag the folder into Netlify. See the README in the project root for the full deploy + domain setup steps.</p>
+</article>
+
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Docs / Site Guide</span>
+</footer>
+
+</body>
+</html>
