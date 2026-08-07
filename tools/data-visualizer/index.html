@@ -22,7 +22,7 @@
             background: var(--bg-dark); 
             color: var(--text); 
             margin: 0; padding: 20px;
-            display: flex; justify-content: center;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .dashboard {
@@ -32,6 +32,7 @@
             max-width: 1300px;
             width: 100%;
             align-items: flex-start;
+            margin-top: 20px;
         }
 
         .visual-section {
@@ -115,7 +116,7 @@
         .log-line { display: flex; padding: 4px 10px; border-bottom: 1px solid #111; cursor: pointer; }
         .log-line.active-step { background: rgba(180, 82, 255, 0.3); color: white; border-left: 3px solid var(--accent); }
         .log-line.error-step { background: rgba(255, 204, 0, 0.1); color: var(--warning-gold); }
-        .log-line.overheat-step { background: rgba(180, 82, 255, 0.1); color: var(--accent); font-weight: bold; } /* NEW STYLE */
+        .log-line.overheat-step { background: rgba(180, 82, 255, 0.1); color: var(--accent); font-weight: bold; }
         .line-num { width: 40px; color: #444; flex-shrink: 0; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #222; }
@@ -130,11 +131,8 @@
         .telemetry-box { font-family: 'Fira Code', monospace; background: #000; padding: 10px; border-radius: 6px; border: 1px solid #222; }
     </style>
 </head>
-<footer class="site-footer">
-  <span>210E — yogurtlib.com</span>
-  <span>Data Visualizer</span>
-</footer>
 <body>
+
 <header class="site-header">
   <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
   <nav class="site-nav">
@@ -185,18 +183,23 @@
     </div>
 </div>
 
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Data Visualizer</span>
+</footer>
+
 <script>
     let pathData = [];
     const fPx = 550;
     const fIn = 144;
-    let currentActiveLine = null; // NEW: Track the active line to avoid searching the DOM
+    let currentActiveLine = null;
     let cachedInspector = null;
     let cachedRobotElement = null;
     let cachedTelemetryElement = null;
     let cachedHeadingElement = null;
     const timeSlider = document.getElementById('timeSlider');
     let lastUpdateTime = 0;
-    const UPDATE_THROTTLE = 16; // ~60fps
+    const UPDATE_THROTTLE = 16;
 
     timeSlider.addEventListener('input', function() {
         const now = Date.now();
@@ -215,7 +218,7 @@
             document.getElementById('btn-match').classList.add('active');
             document.getElementById('btn-skills').classList.remove('active');
         } else {
-            container.style.backgroundImage = "url('https://i.ibb.co/7N8VybfG/Override-Skills-No-walls.png)";
+            container.style.backgroundImage = "url('https://i.ibb.co/7N8VybfG/Override-Skills-No-walls.png')";
             document.getElementById('btn-skills').classList.add('active');
             document.getElementById('btn-match').classList.remove('active');
         }
@@ -363,7 +366,6 @@
         requestAnimationFrame(() => {
             const d = pathData[idx];
             
-            // Cache DOM elements on first call
             if (!cachedRobotElement) {
                 cachedRobotElement = document.getElementById('robot');
                 cachedTelemetryElement = document.getElementById('telemetry');
@@ -371,17 +373,14 @@
                 cachedInspector = document.getElementById('inspector');
             }
             
-            // Update robot position
             const pos = worldToPx(d.x, d.y);
             cachedRobotElement.style.left = `${pos.x}px`;
             cachedRobotElement.style.top = `${pos.y}px`;
             cachedRobotElement.style.transform = `translate(-50%, -50%) rotate(${90 - d.h}deg)`;
             
-            // Update telemetry (batch these updates)
             cachedTelemetryElement.innerText = `X: ${d.x.toFixed(1)} Y: ${d.y.toFixed(1)}`;
             cachedHeadingElement.innerText = `${d.h.toFixed(1)}°`;
 
-            // Update active line with minimal DOM operations
             if (currentActiveLine) {
                 currentActiveLine.classList.remove('active-step');
             }
@@ -391,14 +390,12 @@
                 activeLine.classList.add('active-step');
                 currentActiveLine = activeLine;
                 
-                // Only scroll if inspector exists
                 if (cachedInspector) {
                     const lineTop = activeLine.offsetTop;
                     const lineBottom = lineTop + activeLine.offsetHeight;
                     const viewTop = cachedInspector.scrollTop;
                     const viewBottom = viewTop + cachedInspector.offsetHeight;
 
-                    // Only perform expensive scroll calculation if needed
                     if (lineTop < viewTop || lineBottom > viewBottom) {
                         cachedInspector.scrollTop = lineTop - (cachedInspector.offsetHeight / 2) + (activeLine.offsetHeight / 2);
                     }
