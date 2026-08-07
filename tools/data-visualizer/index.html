@@ -27,7 +27,9 @@
             flex-direction: column; 
             min-height: 100vh;
         }
-
+      
+        .site-header, .site-footer { align-self: stretch; width: 100%; }
+        
         .dashboard {
             display: flex;
             flex-direction: row;
@@ -140,11 +142,10 @@
 <body>
 
 <header class="site-header">
-  <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
   <nav class="site-nav">
     <a href="../../index.html">Home</a>
-    <a href="../custom-pather/index.html">Custom Pather</a>
-    <a href="../data-visualizer/index.html" class="active">Data Visualizer</a>
+    <a href="../custom-pather/index.html" class="active">Custom Pather</a>
+    <a href="../data-visualizer/index.html">Data Visualizer</a>
     <a href="../../docs/index.html">Docs</a>
   </nav>
 </header>
