@@ -22,6 +22,10 @@
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Robot varaibles, change dependanton the 210E robot, other teams/users can configure manually*/
+  --robot-width: 18in;
+  --robot-length: 18in:
 }
 
 * { box-sizing: border-box; }
