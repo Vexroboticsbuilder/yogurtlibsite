@@ -181,7 +181,7 @@
         
         <div class="sidebar-controls">
             <h3 style="margin:0 0 5px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
-            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Shift+Click Node: Edit Delay</span>
+            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Shift+Click Node: Edit Delay | Double-Click Node: Straighten</span>
             
             <!-- Robot Cards -->
             <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff; --card-bg: #221c2d; --robot-glow: rgba(140,82,255,0.3);" onclick="selectRobot(0)">
@@ -193,8 +193,9 @@
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
-                <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(0)"></textarea>
+                <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="primary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); loadRobotPathFromText(0)">Load Path</button>
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(0)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(0)">Clear Path</button>
                 </div>
@@ -209,8 +210,9 @@
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
-                <textarea class="input-box" id="r1_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(1)"></textarea>
+                <textarea class="input-box" id="r1_input" placeholder="// Paste path format..." onclick="event.stopPropagation()"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="primary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); loadRobotPathFromText(1)">Load Path</button>
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(1)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(1)">Clear Path</button>
                 </div>
@@ -225,8 +227,9 @@
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
-                <textarea class="input-box" id="r2_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(2)"></textarea>
+                <textarea class="input-box" id="r2_input" placeholder="// Paste path format..." onclick="event.stopPropagation()"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="primary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); loadRobotPathFromText(2)">Load Path</button>
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(2)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(2)">Clear Path</button>
                 </div>
@@ -241,8 +244,9 @@
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
-                <textarea class="input-box" id="r3_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(3)"></textarea>
+                <textarea class="input-box" id="r3_input" placeholder="// Paste path format..." onclick="event.stopPropagation()"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="primary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); loadRobotPathFromText(3)">Load Path</button>
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(3)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(3)">Clear Path</button>
                 </div>
@@ -536,14 +540,54 @@
     function loadRobotPathFromText(idx) {
         const raw = document.getElementById(`r${idx}_input`).value;
         const startRef = raw.match(/\[Start Pose\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
-        if (!startRef) return;
+        if (!startRef) {
+            alert("Invalid or missing Start Pose format in text box.");
+            return;
+        }
 
-        robots[idx].waypoints = [{ 
+        let wps = [{ 
             x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), 
             cx1: parseFloat(startRef[1]), cy1: parseFloat(startRef[2]), 
             cx2: parseFloat(startRef[1]), cy2: parseFloat(startRef[2]), 
             delay: 0 
         }];
+
+        const segRegex = /Waypoint: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\} \| Delay: (\d+\.?\d*)s/g;
+        const handleRegex = /Handle1: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\} \| Handle2: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\}/g;
+
+        let matchSeg, matchH;
+        let segsData = [];
+        while ((matchSeg = segRegex.exec(raw)) !== null) {
+            segsData.push({ x: parseFloat(matchSeg[1]), y: parseFloat(matchSeg[2]), delay: parseFloat(matchSeg[3]) });
+        }
+
+        let handlesData = [];
+        while ((matchH = handleRegex.exec(raw)) !== null) {
+            handlesData.push({
+                cx1: parseFloat(matchH[1]), cy1: parseFloat(matchH[2]),
+                cx2: parseFloat(matchH[3]), cy2: parseFloat(matchH[4])
+            });
+        }
+
+        for (let i = 0; i < segsData.length; i++) {
+            if (i > 0 && handlesData[i-1]) {
+                wps[i-1].cx1 = handlesData[i-1].cx1;
+                wps[i-1].cy1 = handlesData[i-1].cy1;
+                wps[i-1].cx2 = handlesData[i-1].cx2;
+                wps[i-1].cy2 = handlesData[i-1].cy2;
+            }
+            wps.push({
+                x: segsData[i].x,
+                y: segsData[i].y,
+                cx1: segsData[i].x,
+                cy1: segsData[i].y,
+                cx2: segsData[i].x,
+                cy2: segsData[i].y,
+                delay: segsData[i].delay
+            });
+        }
+
+        robots[idx].waypoints = wps;
         rebuildRobotPath(idx);
         renderScene();
         runCollisionCheck();
@@ -586,15 +630,11 @@
         return { x: evaluatedPoint.x, y: evaluatedPoint.y, angle, w, l };
     }
 
-    // Simple Oriented Bounding Box collision check approximation (circle-to-circle bounding or separating axis)
     function checkBoxesOverlap(b1, b2) {
-        // Approximate collision check using bounding radii plus box dimensions clearance check
         const dist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
         const maxRadius1 = Math.hypot(b1.w, b1.l) / 2;
         const maxRadius2 = Math.hypot(b2.w, b2.l) / 2;
         if (dist > (maxRadius1 + maxRadius2)) return false;
-
-        // More granular axis check can be done, but bounding envelope is robust for fast pass checks
         return dist < (Math.max(b1.w, b1.l)/2 + Math.max(b2.w, b2.l)/2);
     }
 
@@ -607,7 +647,7 @@
         list.innerHTML = "";
         let collisions = [];
         const maxTime = parseFloat(matchDurationInput.value);
-        const step = 0.1; // Check every 100ms
+        const step = 0.1;
 
         for (let t = 0; t <= maxTime; t += step) {
             let activeStates = [];
@@ -623,7 +663,6 @@
                     const r2 = activeStates[j];
                     if (r1.state && r2.state) {
                         if (checkBoxesOverlap(r1.state, r2.state)) {
-                            // Avoid flooding identical collision timestamp blocks (group within 0.3s window)
                             const lastColl = collisions[collisions.length - 1];
                             if (!lastColl || lastColl.r1 !== r1.idx || lastColl.r2 !== r2.idx || (t - lastColl.time > 0.4)) {
                                 collisions.push({ time: t.toFixed(2), r1: r1.idx, r2: r2.idx });
