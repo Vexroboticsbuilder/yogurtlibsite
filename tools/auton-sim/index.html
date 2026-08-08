@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YogurtLib - Multi-Robot Auton Simulator</title>
+    <link rel="stylesheet" href="../../assets/style.css">
+    <style>
+        :root { 
+            --panel: #222222; 
+            --accent: #8c52ff;
+            --accent-soft: #2c1952;
+            --start: #00ff00; 
+            --end: #ff0000;   
+            --bg: #121212;
+            --text: #ffffff;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            background: var(--bg); color: var(--text); margin: 0; padding: 0; 
+        }
+
+        .site-header, .site-footer { align-self: stretch; width: 100%; }
+        .site-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #181818; border-bottom: 1px solid #333; padding: 10px 20px; box-sizing: border-box;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 1.1rem; }
+        .site-nav a { color: #aaa; text-decoration: none; margin-left: 15px; font-size: 0.9rem; }
+        .site-nav a.active { color: var(--accent); }
+
+        .tool-body { display: flex; flex-direction: column; align-items: center; padding: 20px; width: 100%; box-sizing: border-box; }
+
+        .main-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        #canvas-container { 
+            position: relative; border: 1px solid #444; border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(140, 82, 255, 0.2); background: #000; line-height: 0; 
+        }
+
+        canvas { cursor: crosshair; display: block; z-index: 2; position: relative; }
+
+        .sidebar-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 350px;
+            max-height: 622px;
+            overflow-y: auto;
+            background: var(--panel);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            box-sizing: border-box;
+        }
+
+        .robot-config-card {
+            background: #181818;
+            border: 1px solid #333;
+            border-top: 3px solid var(--robot-color, #fff);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .controls { 
+            margin-top: 20px; background: var(--panel); padding: 20px; 
+            border-radius: 12px; width: 992px; box-sizing: border-box; border: 1px solid #222; 
+        }
+
+        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        
+        button { 
+            flex: 1; min-width: 90px; padding: 10px; cursor: pointer; 
+            background: #fff; color: #000; border: none; border-radius: 6px; 
+            font-weight: bold; transition: 0.2s; font-size: 0.8rem; 
+        }
+        button:hover { filter: brightness(1.2); }
+        .secondary-btn { background: #222; color: #fff; border: 1px solid #444; }
+        .primary-btn { background: var(--accent); color: #fff; }
+
+        .input-box { 
+            width: 100%; background: #000; border: 1px solid #333; color: #fff; 
+            padding: 6px; border-radius: 4px; margin-top: 4px; margin-bottom: 6px; 
+            font-family: 'Courier New', monospace; box-sizing: border-box; font-size: 11px;
+            resize: vertical; height: 50px;
+        }
+
+        .config-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-size: 0.75rem; color: #aaa; }
+        .config-row input { 
+            width: 60px; background: #000; border: 1px solid #444; 
+            color: #fff; padding: 3px; border-radius: 4px; font-family: 'Courier New'; 
+        }
+
+        .timeline-container {
+            display: flex; align-items: center; gap: 15px; background: #1a1a1a;
+            padding: 12px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px;
+        }
+
+        .site-footer {
+            display: flex; justify-content: space-between; padding: 15px 20px;
+            background: #181818; border-top: 1px solid #333; box-sizing: border-box; font-size: 0.8rem; color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="brand">YogurtLib <span class="sub" style="color:var(--accent)">// MULTI-ROBOT SIMULATOR</span></div>
+  <nav class="site-nav">
+    <a href="#" class="active">Simulator</a>
+  </nav>
+</header>
+
+<div class="tool-body">
+    <div class="main-layout">
+        <div id="canvas-container">
+            <canvas id="field" width="622" height="622"></canvas>
+        </div>
+        
+        <div class="sidebar-controls">
+            <h3 style="margin:0 0 10px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
+            
+            <!-- Robot 1 -->
+            <div class="robot-config-card" style="--robot-color: #8c52ff;">
+                <b>Robot 1 (Purple)</b>
+                <div class="config-row" style="margin-top:5px;">
+                    <span>RPM:</span><input type="number" id="r0_rpm" value="360" step="10">
+                    <span>Wheel Dia (in):</span><input type="number" id="r0_dia" value="3.25" step="0.25">
+                </div>
+                <div class="config-row">
+                    <span>Delay (s):</span><input type="number" id="r0_delay" value="0" step="0.5">
+                    <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px">/<input type="number" id="r0_l" value="15" style="width:40px">
+                </div>
+                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
+                <textarea class="input-box" id="r0_input" placeholder="// [Start Pose Reference]: {X: 0, Y: 0}..."></textarea>
+                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(0)">Load Path 1</button>
+            </div>
+
+            <!-- Robot 2 -->
+            <div class="robot-config-card" style="--robot-color: #49B6FF;">
+                <b>Robot 2 (Blue)</b>
+                <div class="config-row" style="margin-top:5px;">
+                    <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10">
+                    <span>Wheel Dia (in):</span><input type="number" id="r1_dia" value="3.25" step="0.25">
+                </div>
+                <div class="config-row">
+                    <span>Delay (s):</span><input type="number" id="r1_delay" value="0" step="0.5">
+                    <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px">/<input type="number" id="r1_l" value="15" style="width:40px">
+                </div>
+                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
+                <textarea class="input-box" id="r1_input" placeholder="Paste path code..."></textarea>
+                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(1)">Load Path 2</button>
+            </div>
+
+            <!-- Robot 3 -->
+            <div class="robot-config-card" style="--robot-color: #2CC259;">
+                <b>Robot 3 (Green)</b>
+                <div class="config-row" style="margin-top:5px;">
+                    <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10">
+                    <span>Wheel Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25">
+                </div>
+                <div class="config-row">
+                    <span>Delay (s):</span><input type="number" id="r2_delay" value="0" step="0.5">
+                    <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px">/<input type="number" id="r2_l" value="15" style="width:40px">
+                </div>
+                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
+                <textarea class="input-box" id="r2_input" placeholder="Paste path code..."></textarea>
+                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(2)">Load Path 3</button>
+            </div>
+
+            <!-- Robot 4 -->
+            <div class="robot-config-card" style="--robot-color: #FF3949;">
+                <b>Robot 4 (Red)</b>
+                <div class="config-row" style="margin-top:5px;">
+                    <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10">
+                    <span>Wheel Dia (in):</span><input type="number" id="r3_dia" value="3.25" step="0.25">
+                </div>
+                <div class="config-row">
+                    <span>Delay (s):</span><input type="number" id="r3_delay" value="0" step="0.5">
+                    <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px">/<input type="number" id="r3_l" value="15" style="width:40px">
+                </div>
+                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
+                <textarea class="input-box" id="r3_input" placeholder="Paste path code..."></textarea>
+                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(3)">Load Path 4</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="timeline-container">
+            <span style="font-size: 0.8rem; font-weight: bold;">AUTON TIMER:</span>
+            <input type="number" id="matchDuration" value="15" style="width: 50px; background:#000; border:1px solid #444; color:#fff; padding:4px; border-radius:4px;" min="1" max="60"> <span style="font-size:0.8rem; color:#888;">sec</span>
+            <input type="range" id="timeSlider" min="0" max="15" step="0.05" value="0" style="flex-grow: 1; accent-color: var(--accent);">
+            <span id="timeDisplay" style="font-family: 'Courier New'; font-weight: bold; width: 60px; text-align: right;">0.00s</span>
+        </div>
+
+        <div class="btn-group">
+            <button class="primary-btn" onclick="togglePlay()" id="playBtn">Play Simulation</button>
+            <button class="secondary-btn" onclick="resetSimulation()">Reset</button>
+        </div>
+    </div>
+</div>
+
+<footer class="site-footer">
+  <span>yogurtlib.com</span>
+  <span>Multi-Robot Auton Simulator</span>
+</footer>
+
+<script>
+    const canvas = document.getElementById('field');
+    const ctx = canvas.getContext('2d');
+    const timeSlider = document.getElementById('timeSlider');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const matchDurationInput = document.getElementById('matchDuration');
+    const playBtn = document.getElementById('playBtn');
+
+    const robotColors = ['#8c52ff', '#49B6FF', '#2CC259', '#FF3949'];
+    const totalFieldInches = 141.0;
+    const canvasSize = 600;
+    const fieldOffset = 11;
+    const pixelsPerInch = canvasSize / totalFieldInches;
+
+    const imgMatch = new Image();
+    const imgWalls = new Image();
+    let imagesLoaded = 0;
+    
+    imgMatch.onload = () => { imagesLoaded++; checkRender(); };
+    imgWalls.onload = () => { imagesLoaded++; checkRender(); };
+    imgMatch.src = '../../assets/fields/Override_H2H_No_Walls_YogurtLib.png';
+    imgWalls.src = '../../assets/fields/Override_Walls_YogurtLib.png';
+
+    let robots = [
+        { path: [], totalDist: 0, duration: 0, active: false },
+        { path: [], totalDist: 0, duration: 0, active: false },
+        { path: [], totalDist: 0, duration: 0, active: false },
+        { path: [], totalDist: 0, duration: 0, active: false }
+    ];
+
+    let isPlaying = false;
+    let lastAnimTime = null;
+
+    matchDurationInput.addEventListener('change', () => {
+        timeSlider.max = matchDurationInput.value;
+        if(parseFloat(timeSlider.value) > parseFloat(matchDurationInput.value)) {
+            timeSlider.value = matchDurationInput.value;
+        }
+        updateSimulation();
+    });
+
+    timeSlider.addEventListener('input', () => {
+        updateSimulation();
+    });
+
+    function parsePathText(rawText) {
+        if (!rawText) return [];
+        const startRef = rawText.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
+        const segmentBlocks = rawText.split(/\/\/ Segment \d+/).filter(b => b.includes('Waypoint'));
+        const pathPoints = [];
+
+        if (startRef) {
+            let curX = parseFloat(startRef[1]);
+            let curY = parseFloat(startRef[2]);
+            pathPoints.push({ x: curX, y: curY });
+
+            let currentControls = [];
+            segmentBlocks.forEach((block) => {
+                const wpMatch = block.match(/Waypoint\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+                const c1Match = block.match(/Control 1\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+                const c2Match = block.match(/Control 2\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+
+                if (wpMatch && c1Match && c2Match) {
+                    const p1 = pathPoints[pathPoints.length - 1];
+                    const p2 = { x: parseFloat(wpMatch[1]), y: parseFloat(wpMatch[2]) };
+                    const c1 = { x: parseFloat(c1Match[1]), y: parseFloat(c1Match[2]) };
+                    const c2 = { x: parseFloat(c2Match[1]), y: parseFloat(c2Match[2]) };
+
+                    // Generate dense path points along bezier curve
+                    const steps = Math.max(10, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / 0.5));
+                    for (let t = 1; t <= steps; t++) {
+                        let s = t / steps;
+                        let x = Math.pow(1-s, 3) * p1.x + 3 * Math.pow(1-s, 2) * s * c1.x + 3 * (1-s) * s*s * c2.x + s*s*s * p2.x;
+                        let y = Math.pow(1-s, 3) * p1.y + 3 * Math.pow(1-s, 2) * s * c1.y + 3 * (1-s) * s*s * c2.y + s*s*s * p2.y;
+                        pathPoints.push({ x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) });
+                    }
+                }
+            });
+        }
+        return pathPoints;
+    }
+
+    function loadRobotPath(idx) {
+        const text = document.getElementById(`r${idx}_input`).value;
+        const pts = parsePathText(text);
+        
+        let totalDist = 0;
+        for(let i=1; i<pts.length; i++) {
+            totalDist += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+        }
+
+        const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
+        const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
+        const speedInchesPerSec = (rpm / 60) * (Math.PI * dia);
+        
+        const duration = speedInchesPerSec > 0 ? totalDist / speedInchesPerSec : 0;
+
+        robots[idx] = {
+            path: pts,
+            totalDist: totalDist,
+            duration: duration,
+            active: pts.length > 0
+        };
+        renderScene();
+    }
+
+    function fromInches(ix, iy) { 
+        const cx = fieldOffset + ((ix + (totalFieldInches/2)) * pixelsPerInch);
+        const cy = fieldOffset + (((totalFieldInches/2) - iy) * pixelsPerInch);
+        return { x: cx, y: cy }; 
+    }
+
+    function checkRender() {
+        if (imagesLoaded >= 2) renderScene();
+    }
+
+    function renderScene() {
+        ctx.clearRect(0, 0, 622, 622);
+        if(imgWalls.complete) ctx.drawImage(imgWalls, 0, 0, 622, 622);
+        if(imgMatch.complete) {
+            ctx.save();
+            ctx.translate(fieldOffset + 300, fieldOffset + 300);
+            ctx.drawImage(imgMatch, -300, -300, 600, 600);
+            ctx.restore();
+        }
+
+        // Draw paths for all loaded robots
+        robots.forEach((r, idx) => {
+            if(r.path.length < 2) return;
+            ctx.strokeStyle = robotColors[idx];
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            r.path.forEach((p, i) => {
+                const c = fromInches(p.x, p.y);
+                if(i === 0) ctx.moveTo(c.x, c.y);
+                else ctx.lineTo(c.x, c.y);
+            });
+            ctx.stroke();
+        });
+
+        // Draw robots at current timeline position
+        const currentTime = parseFloat(timeSlider.value);
+        timeDisplay.innerText = currentTime.toFixed(2) + 's';
+
+        robots.forEach((r, idx) => {
+            if(!r.active || r.path.length === 0) return;
+            const delay = parseFloat(document.getElementById(`r${idx}_delay`).value) || 0;
+            
+            if(currentTime < delay) return; // Haven't started yet due to delay
+            
+            const activeTime = currentTime - delay;
+            let progress = r.duration > 0 ? activeTime / r.duration : 1;
+            if(progress > 1) progress = 1; // Stop when path ends
+
+            const pathIdx = Math.min(Math.floor(progress * (r.path.length - 1)), r.path.length - 2);
+            const p1 = fromInches(r.path[pathIdx].x, r.path[pathIdx].y);
+            const p2 = fromInches(r.path[Math.min(pathIdx + 1, r.path.length - 1)].x, r.path[Math.min(pathIdx + 1, r.path.length - 1)].y);
+            
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const w = (parseFloat(document.getElementById(`r${idx}_w`).value) || 15) * pixelsPerInch;
+            const l = (parseFloat(document.getElementById(`r${idx}_l`).value) || 15) * pixelsPerInch;
+
+            ctx.save();
+            ctx.translate(p1.x, p1.y);
+            ctx.rotate(angle);
+            ctx.strokeStyle = robotColors[idx];
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-l/2, -w/2, l, w);
+            ctx.fillStyle = robotColors[idx] + '33';
+            ctx.fillRect(-l/2, -w/2, l, w);
+            ctx.fillStyle = robotColors[idx];
+            ctx.beginPath();
+            ctx.moveTo(l/2, 0);
+            ctx.lineTo(l/2 - 5, -5);
+            ctx.lineTo(l/2 - 5, 5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    function updateSimulation() {
+        renderScene();
+    }
+
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        playBtn.innerText = isPlaying ? "Pause Simulation" : "Play Simulation";
+        if(isPlaying) {
+            lastAnimTime = performance.now();
+            requestAnimationFrame(animLoop);
+        }
+    }
+
+    function animLoop(timestamp) {
+        if(!isPlaying) return;
+        const dt = (timestamp - lastAnimTime) / 1000;
+        lastAnimTime = timestamp;
+
+        let curTime = parseFloat(timeSlider.value) + dt;
+        const maxTime = parseFloat(matchDurationInput.value);
+
+        if(curTime >= maxTime) {
+            curTime = maxTime;
+            isPlaying = false;
+            playBtn.innerText = "Play Simulation";
+        }
+
+        timeSlider.value = curTime;
+        updateSimulation();
+
+        if(isPlaying) {
+            requestAnimationFrame(animLoop);
+        }
+    }
+
+    function resetSimulation() {
+        isPlaying = false;
+        playBtn.innerText = "Play Simulation";
+        timeSlider.value = 0;
+        updateSimulation();
+    }
+</script>
+</body>
+</html>
