@@ -87,6 +87,7 @@
         button:hover { filter: brightness(1.2); }
         .secondary-btn { background: #222; color: #fff; border: 1px solid #444; }
         .primary-btn { background: var(--accent); color: #fff; }
+        .danger-btn { background: #552222; color: #ffcccc; border: 1px solid #773333; }
 
         .input-box { 
             width: 100%; background: #000; border: 1px solid #333; color: #fff; 
@@ -129,7 +130,7 @@
         
         <div class="sidebar-controls">
             <h3 style="margin:0 0 5px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
-            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Click to select active robot. **Shift + Click** a node on field to set its pause delay directly.</span>
+            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Shift+Click Node: Edit Delay | Double-Click Node: Straighten</span>
             
             <!-- Robot Cards -->
             <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff; --card-bg: #221c2d; --robot-glow: rgba(140,82,255,0.3);" onclick="selectRobot(0)">
@@ -142,7 +143,10 @@
                     <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(0)"></textarea>
-                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(0)">Clear Pauses</button>
+                <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(0)">Clear Pauses</button>
+                    <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(0)">Clear Path</button>
+                </div>
             </div>
 
             <div id="card_1" class="robot-config-card" style="--robot-color: #49B6FF; --card-bg: #192633; --robot-glow: rgba(73,182,255,0.3);" onclick="selectRobot(1)">
@@ -155,7 +159,10 @@
                     <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r1_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(1)"></textarea>
-                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(1)">Clear Pauses</button>
+                <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(1)">Clear Pauses</button>
+                    <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(1)">Clear Path</button>
+                </div>
             </div>
 
             <div id="card_2" class="robot-config-card" style="--robot-color: #2CC259; --card-bg: #182c1f; --robot-glow: rgba(44,194,89,0.3);" onclick="selectRobot(2)">
@@ -168,7 +175,10 @@
                     <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r2_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(2)"></textarea>
-                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(2)">Clear Pauses</button>
+                <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(2)">Clear Pauses</button>
+                    <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(2)">Clear Path</button>
+                </div>
             </div>
 
             <div id="card_3" class="robot-config-card" style="--robot-color: #FF3949; --card-bg: #331c1f; --robot-glow: rgba(255,57,73,0.3);" onclick="selectRobot(3)">
@@ -181,7 +191,10 @@
                     <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r3_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(3)"></textarea>
-                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(3)">Clear Pauses</button>
+                <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(3)">Clear Pauses</button>
+                    <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(3)">Clear Path</button>
+                </div>
             </div>
         </div>
     </div>
@@ -197,6 +210,7 @@
         <div class="btn-group">
             <button class="primary-btn" onclick="togglePlay()" id="playBtn">Play Simulation</button>
             <button class="secondary-btn" onclick="resetSimulation()">Reset</button>
+            <button class="danger-btn" onclick="clearAllPaths()">Clear All Paths</button>
         </div>
     </div>
 </div>
@@ -240,6 +254,8 @@
     let isPlaying = false;
     let lastTimestamp = null;
     let dragTarget = null;
+    let lastClickTime = 0;
+    let lastClickedWpIdx = -1;
 
     function selectRobot(idx) {
         activeRobotIdx = idx;
@@ -271,14 +287,23 @@
         const r = robots[activeRobotIdx];
         const hitRadius = 14;
 
-        // Check if hit any waypoint or control handle of ACTIVE robot
         for (let i = 0; i < r.waypoints.length; i++) {
             const wp = r.waypoints[i];
-            
-            // Check main point
             const ptScreen = fromInches(wp.x, wp.y);
+
             if (Math.hypot(mouseX - ptScreen.x, mouseY - ptScreen.y) < hitRadius) {
-                if (e.shiftKey) { // Shift + Click to overwrite delay explicitly
+                const now = Date.now();
+                if (now - lastClickTime < 300 && lastClickedWpIdx === i) {
+                    // Double-Click: Straighten Handles between neighbors
+                    straightenWaypoint(activeRobotIdx, i);
+                    lastClickTime = 0;
+                    lastClickedWpIdx = -1;
+                    return;
+                }
+                lastClickTime = now;
+                lastClickedWpIdx = i;
+
+                if (e.shiftKey) {
                     const delaySec = prompt(`Enter exact delay duration for waypoint ${i} (seconds):`, wp.delay || 0);
                     if (delaySec !== null && !isNaN(delaySec)) {
                         wp.delay = Math.max(0, parseFloat(delaySec));
@@ -292,7 +317,6 @@
                 return;
             }
 
-            // Check handles
             if (i > 0) {
                 const c1Screen = fromInches(r.waypoints[i-1].cx1, r.waypoints[i-1].cy1);
                 if (Math.hypot(mouseX - c1Screen.x, mouseY - c1Screen.y) < hitRadius) {
@@ -307,7 +331,7 @@
             }
         }
 
-        // If no node clicked, add a new Waypoint
+        // Add New Waypoint
         if (r.waypoints.length === 0) {
             r.waypoints.push({
                 x: clickedInches.x, y: clickedInches.y,
@@ -317,6 +341,7 @@
             });
         } else {
             const last = r.waypoints[r.waypoints.length - 1];
+            // Industry standard pather handle distribution (1/3 length offsets)
             last.cx1 = parseFloat((last.x + (clickedInches.x - last.x) * 0.33).toFixed(2));
             last.cy1 = parseFloat((last.y + (clickedInches.y - last.y) * 0.33).toFixed(2));
             last.cx2 = parseFloat((last.x + (clickedInches.x - last.x) * 0.66).toFixed(2));
@@ -339,7 +364,8 @@
         if (!dragTarget) return;
         const rect = canvas.getBoundingClientRect();
         const pos = toInches(e.clientX - rect.left, e.clientY - rect.top);
-        const wp = robots[activeRobotIdx].waypoints[dragTarget.wpIdx];
+        const r = robots[activeRobotIdx];
+        const wp = r.waypoints[dragTarget.wpIdx];
 
         if (dragTarget.type === 'point') {
             const dx = pos.x - wp.x;
@@ -348,6 +374,12 @@
             wp.y = pos.y;
             wp.cx1 += dx; wp.cy1 += dy;
             wp.cx2 += dx; wp.cy2 += dy;
+
+            // Also shift previous segment's exit handle if applicable
+            if (dragTarget.wpIdx > 0) {
+                const prevWp = r.waypoints[dragTarget.wpIdx - 1];
+                prevWp.cx2 += dx; prevWp.cy2 += dy;
+            }
         } else if (dragTarget.type === 'c1') {
             wp.cx1 = pos.x;
             wp.cy1 = pos.y;
@@ -365,11 +397,47 @@
         dragTarget = null;
     });
 
+    function straightenWaypoint(idx, wpIdx) {
+        const r = robots[idx];
+        const wp = r.waypoints[wpIdx];
+        let prevPt = wpIdx > 0 ? r.waypoints[wpIdx - 1] : wp;
+        let nextPt = wpIdx < r.waypoints.length - 1 ? r.waypoints[wpIdx + 1] : wp;
+
+        if (wpIdx > 0) {
+            const pPrev = r.waypoints[wpIdx - 1];
+            pPrev.cx2 = parseFloat((pPrev.x + (wp.x - pPrev.x) * 0.66).toFixed(2));
+            pPrev.cy2 = parseFloat((pPrev.y + (wp.y - pPrev.y) * 0.66).toFixed(2));
+            wp.cx1 = parseFloat((wp.x - (wp.x - pPrev.x) * 0.33).toFixed(2));
+            wp.cy1 = parseFloat((wp.y - (wp.y - pPrev.y) * 0.33).toFixed(2));
+        }
+        if (wpIdx < r.waypoints.length - 1) {
+            const pNext = r.waypoints[wpIdx + 1];
+            wp.cx2 = parseFloat((wp.x + (pNext.x - wp.x) * 0.33).toFixed(2));
+            wp.cy2 = parseFloat((wp.y + (pNext.y - wp.y) * 0.33).toFixed(2));
+        }
+        rebuildRobotPath(idx);
+        updateTextArea(idx);
+        renderScene();
+    }
+
     function clearPauses(idx) {
         robots[idx].waypoints.forEach(wp => wp.delay = 0);
         rebuildRobotPath(idx);
         updateTextArea(idx);
         renderScene();
+    }
+
+    function clearRobotPath(idx) {
+        robots[idx].waypoints = [];
+        robots[idx].flatPath = [];
+        updateTextArea(idx);
+        renderScene();
+    }
+
+    function clearAllPaths() {
+        for (let i = 0; i < robots.length; i++) {
+            clearRobotPath(i);
+        }
     }
 
     function rebuildRobotPath(idx) {
@@ -388,7 +456,7 @@
             for (let t = 1; t <= steps; t++) {
                 let s = t / steps;
                 let x = Math.pow(1-s, 3) * p1.x + 3 * Math.pow(1-s, 2) * s * p1.cx1 + 3 * (1-s) * s*s * p1.cx2 + s*s*s * p2.x;
-                let y = Math.pow(1-s, 3) * p1.y + 3 * Math.pow(1-s, 2) * s * p1.cy1 + 3 * (1-s) * s*s * p1.cx2 + s*s*s * p2.y;
+                let y = Math.pow(1-s, 3) * p1.y + 3 * Math.pow(1-s, 2) * s * p1.cy1 + 3 * (1-s) * s*s * p1.cy2 + s*s*s * p2.y;
                 const pt = { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) };
                 
                 flatPoints.push({ ...pt, delayNode: (t === steps ? (p2.delay || 0) : 0) });
