@@ -2,27 +2,12 @@
 <html>
 <head>
     <title>YogurtLib - Multi-Robot Auton Simulator</title>
+    <link rel="stylesheet" href="../../assets/style.css">
     <style>
-        :root { 
-            --panel: #222222; 
-            --accent: #8c52ff;
-            --accent-soft: #2c1952;
-            --start: #00ff00; 
-            --end: #ff0000;   
-            --bg: #121212;
-            --text: #ffffff;
-        }
-
         body { 
             font-family: 'Inter', sans-serif; 
             display: flex; flex-direction: column; align-items: center; 
             background: var(--bg); color: var(--text); margin: 0; padding: 0; 
-        }
-
-        .site-header, .site-footer { align-self: stretch; width: 100%; }
-        .site-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #181818; border-bottom: 1px solid #333; padding: 10px 20px; box-sizing: border-box;
         }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 1.1rem; }
         .site-nav a { color: #aaa; text-decoration: none; margin-left: 15px; font-size: 0.9rem; }
@@ -154,7 +139,7 @@
 <body>
 
 <header class="site-header">
-    <div class="brand"><img src="../../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// PATHER</span></div>
+    <div class="brand"><img src="../../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// DATA VISUALS</span></div>
   <nav class="site-nav">
     <a href="../../index.html">Home</a>
     <a href="../custom-pather/index.html">Custom Pather</a>
@@ -269,6 +254,7 @@
         <div class="btn-group">
             <button class="primary-btn" onclick="togglePlay()" id="playBtn">Play Simulation</button>
             <button class="secondary-btn" onclick="resetSimulation()">Reset</button>
+            <button class="secondary-btn" onclick="takeSnapshot()">Snapshot</button>
             <button class="danger-btn" onclick="clearAllPaths()">Clear All Paths</button>
         </div>
     </div>
@@ -343,7 +329,6 @@
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
-        const clickedInches = toInches(mouseX, mouseY);
 
         const r = robots[activeRobotIdx];
         const hitRadius = 14;
@@ -398,7 +383,7 @@
             const ptScreen = fromInches(wp.x, wp.y);
 
             if (Math.hypot(mouseX - ptScreen.x, mouseY - ptScreen.y) < hitRadius) {
-                if (e.shiftKey) return; // handled in click
+                if (e.shiftKey) return; 
                 dragTarget = { wpIdx: i, type: 'point' };
                 return;
             }
@@ -737,7 +722,21 @@
         if (imagesLoaded >= 2) renderScene();
     }
 
-    function renderScene() {
+    function drawArrowHead(ctx, x, y, angle, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-8, -4);
+        ctx.lineTo(-8, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function renderScene(isSnapshot = false) {
         ctx.clearRect(0, 0, 622, 622);
         if (imgWalls.complete) ctx.drawImage(imgWalls, 0, 0, 622, 622);
         if (imgMatch.complete) {
@@ -747,13 +746,14 @@
             ctx.restore();
         }
 
+        // Render all paths and permanent direction arrows
         robots.forEach((r, idx) => {
-            if (r.waypoints.length === 0) return;
+            if (r.flatPath.length === 0) return;
             const isActive = (idx === activeRobotIdx);
 
             ctx.strokeStyle = robotColors[idx];
-            ctx.lineWidth = isActive ? 3 : 1.5;
-            ctx.globalAlpha = isActive ? 1.0 : 0.4;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = isSnapshot ? 0.8 : (isActive ? 1.0 : 0.4);
 
             ctx.beginPath();
             r.flatPath.forEach((p, i) => {
@@ -763,7 +763,23 @@
             });
             ctx.stroke();
 
-            if (isActive) {
+            // Draw direction arrows along path at fixed intervals
+            let distAcc = 0;
+            const arrowIntervalPixels = 40;
+            for (let i = 1; i < r.flatPath.length; i++) {
+                const pPrev = fromInches(r.flatPath[i-1].x, r.flatPath[i-1].y);
+                const pCurr = fromInches(r.flatPath[i].x, r.flatPath[i].y);
+                const segDist = Math.hypot(pCurr.x - pPrev.x, pCurr.y - pPrev.y);
+                distAcc += segDist;
+                if (distAcc >= arrowIntervalPixels) {
+                    const angle = Math.atan2(pCurr.y - pPrev.y, pCurr.x - pPrev.x);
+                    drawArrowHead(ctx, pCurr.x, pCurr.y, angle, robotColors[idx]);
+                    distAcc = 0;
+                }
+            }
+
+            // Render interactive waypoints and handles only if NOT taking a snapshot and robot is active
+            if (!isSnapshot && isActive) {
                 r.waypoints.forEach((wp, i) => {
                     const c = fromInches(wp.x, wp.y);
                     
@@ -806,6 +822,7 @@
         const currentTime = parseFloat(timeSlider.value);
         timeDisplay.innerText = currentTime.toFixed(2) + 's';
 
+        // Render robot shapes at current timestamp
         robots.forEach((r, idx) => {
             if (!r.flatPath || r.flatPath.length === 0) return;
             const state = getRobotStateAtTime(idx, currentTime);
@@ -832,6 +849,17 @@
             ctx.fill();
             ctx.restore();
         });
+    }
+
+    function takeSnapshot() {
+        renderScene(true);
+        const dataURL = canvas.toDataURL('image/png');
+        renderScene(false); // restore normal view
+
+        const link = document.createElement('a');
+        link.download = 'auton-field-snapshot.png';
+        link.href = dataURL;
+        link.click();
     }
 
     function togglePlay() {
