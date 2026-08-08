@@ -47,8 +47,8 @@
         .sidebar-controls {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            width: 350px;
+            gap: 12px;
+            width: 360px;
             max-height: 622px;
             overflow-y: auto;
             background: var(--panel);
@@ -64,11 +64,17 @@
             border-top: 3px solid var(--robot-color, #fff);
             padding: 10px;
             border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .robot-config-card.selected {
+            border-color: var(--accent);
+            background: #221c2d;
         }
 
         .controls { 
             margin-top: 20px; background: var(--panel); padding: 20px; 
-            border-radius: 12px; width: 992px; box-sizing: border-box; border: 1px solid #222; 
+            border-radius: 12px; width: 994px; box-sizing: border-box; border: 1px solid #222; 
         }
 
         .btn-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
@@ -86,7 +92,7 @@
             width: 100%; background: #000; border: 1px solid #333; color: #fff; 
             padding: 6px; border-radius: 4px; margin-top: 4px; margin-bottom: 6px; 
             font-family: 'Courier New', monospace; box-sizing: border-box; font-size: 11px;
-            resize: vertical; height: 50px;
+            resize: vertical; height: 45px;
         }
 
         .config-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-size: 0.75rem; color: #aaa; }
@@ -122,70 +128,56 @@
         </div>
         
         <div class="sidebar-controls">
-            <h3 style="margin:0 0 10px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
+            <h3 style="margin:0 0 5px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
+            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Click a card to select active target for canvas placement.</span>
             
-            <!-- Robot 1 -->
-            <div class="robot-config-card" style="--robot-color: #8c52ff;">
+            <!-- Robot Cards -->
+            <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff;" onclick="selectRobot(0)">
                 <b>Robot 1 (Purple)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r0_rpm" value="360" step="10">
-                    <span>Wheel Dia (in):</span><input type="number" id="r0_dia" value="3.25" step="0.25">
+                    <span>RPM:</span><input type="number" id="r0_rpm" value="360" step="10" onclick="event.stopPropagation()">
+                    <span>Dia (in):</span><input type="number" id="r0_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
                 </div>
                 <div class="config-row">
-                    <span>Delay (s):</span><input type="number" id="r0_delay" value="0" step="0.5">
-                    <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px">/<input type="number" id="r0_l" value="15" style="width:40px">
+                    <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
-                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
-                <textarea class="input-box" id="r0_input" placeholder="// [Start Pose Reference]: {X: 0, Y: 0}..."></textarea>
-                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(0)">Load Path 1</button>
+                <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(0)"></textarea>
             </div>
 
-            <!-- Robot 2 -->
-            <div class="robot-config-card" style="--robot-color: #49B6FF;">
+            <div id="card_1" class="robot-config-card" style="--robot-color: #49B6FF;" onclick="selectRobot(1)">
                 <b>Robot 2 (Blue)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10">
-                    <span>Wheel Dia (in):</span><input type="number" id="r1_dia" value="3.25" step="0.25">
+                    <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10" onclick="event.stopPropagation()">
+                    <span>Dia (in):</span><input type="number" id="r1_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
                 </div>
                 <div class="config-row">
-                    <span>Delay (s):</span><input type="number" id="r1_delay" value="0" step="0.5">
-                    <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px">/<input type="number" id="r1_l" value="15" style="width:40px">
+                    <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
-                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
-                <textarea class="input-box" id="r1_input" placeholder="Paste path code..."></textarea>
-                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(1)">Load Path 2</button>
+                <textarea class="input-box" id="r1_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(1)"></textarea>
             </div>
 
-            <!-- Robot 3 -->
-            <div class="robot-config-card" style="--robot-color: #2CC259;">
+            <div id="card_2" class="robot-config-card" style="--robot-color: #2CC259;" onclick="selectRobot(2)">
                 <b>Robot 3 (Green)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10">
-                    <span>Wheel Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25">
+                    <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10" onclick="event.stopPropagation()">
+                    <span>Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
                 </div>
                 <div class="config-row">
-                    <span>Delay (s):</span><input type="number" id="r2_delay" value="0" step="0.5">
-                    <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px">/<input type="number" id="r2_l" value="15" style="width:40px">
+                    <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
-                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
-                <textarea class="input-box" id="r2_input" placeholder="Paste path code..."></textarea>
-                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(2)">Load Path 3</button>
+                <textarea class="input-box" id="r2_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(2)"></textarea>
             </div>
 
-            <!-- Robot 4 -->
-            <div class="robot-config-card" style="--robot-color: #FF3949;">
+            <div id="card_3" class="robot-config-card" style="--robot-color: #FF3949;" onclick="selectRobot(3)">
                 <b>Robot 4 (Red)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10">
-                    <span>Wheel Dia (in):</span><input type="number" id="r3_dia" value="3.25" step="0.25">
+                    <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10" onclick="event.stopPropagation()">
+                    <span>Dia (in):</span><input type="number" id="r3_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
                 </div>
                 <div class="config-row">
-                    <span>Delay (s):</span><input type="number" id="r3_delay" value="0" step="0.5">
-                    <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px">/<input type="number" id="r3_l" value="15" style="width:40px">
+                    <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
-                <span style="font-size:0.65rem; color:#888;">Path Input:</span>
-                <textarea class="input-box" id="r3_input" placeholder="Paste path code..."></textarea>
-                <button class="secondary-btn" style="width:100%; padding:5px; font-size:0.7rem;" onclick="loadRobotPath(3)">Load Path 4</button>
+                <textarea class="input-box" id="r3_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(3)"></textarea>
             </div>
         </div>
     </div>
@@ -233,93 +225,201 @@
     imgMatch.src = '../../assets/fields/Override_H2H_No_Walls_YogurtLib.png';
     imgWalls.src = '../../assets/fields/Override_Walls_YogurtLib.png';
 
+    let activeRobotIdx = 0;
     let robots = [
-        { path: [], totalDist: 0, duration: 0, active: false },
-        { path: [], totalDist: 0, duration: 0, active: false },
-        { path: [], totalDist: 0, duration: 0, active: false },
-        { path: [], totalDist: 0, duration: 0, active: false }
+        { waypoints: [], segments: [], totalDist: 0, duration: 0 },
+        { waypoints: [], segments: [], totalDist: 0, duration: 0 },
+        { waypoints: [], segments: [], totalDist: 0, duration: 0 },
+        { waypoints: [], segments: [], totalDist: 0, duration: 0 }
     ];
 
     let isPlaying = false;
     let lastAnimTime = null;
+
+    function selectRobot(idx) {
+        activeRobotIdx = idx;
+        document.querySelectorAll('.robot-config-card').forEach((c, i) => {
+            if(i === idx) c.classList.add('selected');
+            else c.classList.remove('selected');
+        });
+    }
 
     matchDurationInput.addEventListener('change', () => {
         timeSlider.max = matchDurationInput.value;
         if(parseFloat(timeSlider.value) > parseFloat(matchDurationInput.value)) {
             timeSlider.value = matchDurationInput.value;
         }
-        updateSimulation();
+        renderScene();
     });
 
     timeSlider.addEventListener('input', () => {
-        updateSimulation();
+        renderScene();
     });
 
-    function parsePathText(rawText) {
-        if (!rawText) return [];
-        const startRef = rawText.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
-        const segmentBlocks = rawText.split(/\/\/ Segment \d+/).filter(b => b.includes('Waypoint'));
-        const pathPoints = [];
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const clickedInches = toInches(mouseX, mouseY);
 
-        if (startRef) {
-            let curX = parseFloat(startRef[1]);
-            let curY = parseFloat(startRef[2]);
-            pathPoints.push({ x: curX, y: curY });
+        const r = robots[activeRobotIdx];
 
-            let currentControls = [];
-            segmentBlocks.forEach((block) => {
-                const wpMatch = block.match(/Waypoint\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
-                const c1Match = block.match(/Control 1\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
-                const c2Match = block.match(/Control 2\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+        // Check if user clicked close to an existing segment/point to insert a delay
+        let clickedSegmentIdx = -1;
+        let closestPointIdx = -1;
+        let minDist = 15;
 
-                if (wpMatch && c1Match && c2Match) {
-                    const p1 = pathPoints[pathPoints.length - 1];
-                    const p2 = { x: parseFloat(wpMatch[1]), y: parseFloat(wpMatch[2]) };
-                    const c1 = { x: parseFloat(c1Match[1]), y: parseFloat(c1Match[2]) };
-                    const c2 = { x: parseFloat(c2Match[1]), y: parseFloat(c2Match[2]) };
-
-                    // Generate dense path points along bezier curve
-                    const steps = Math.max(10, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / 0.5));
-                    for (let t = 1; t <= steps; t++) {
-                        let s = t / steps;
-                        let x = Math.pow(1-s, 3) * p1.x + 3 * Math.pow(1-s, 2) * s * c1.x + 3 * (1-s) * s*s * c2.x + s*s*s * p2.x;
-                        let y = Math.pow(1-s, 3) * p1.y + 3 * Math.pow(1-s, 2) * s * c1.y + 3 * (1-s) * s*s * c2.y + s*s*s * p2.y;
-                        pathPoints.push({ x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) });
-                    }
+        r.segments.forEach((seg, sIdx) => {
+            seg.forEach((pt, pIdx) => {
+                const screenPt = fromInches(pt.x, pt.y);
+                const dist = Math.hypot(mouseX - screenPt.x, mouseY - screenPt.y);
+                if(dist < minDist) {
+                    minDist = dist;
+                    clickedSegmentIdx = sIdx;
+                    closestPointIdx = pIdx;
                 }
             });
-        }
-        return pathPoints;
-    }
+        });
 
-    function loadRobotPath(idx) {
-        const text = document.getElementById(`r${idx}_input`).value;
-        const pts = parsePathText(text);
-        
-        let totalDist = 0;
-        for(let i=1; i<pts.length; i++) {
-            totalDist += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+        if(clickedSegmentIdx !== -1) {
+            // Prompt for delay addition at this path node
+            const delaySec = prompt("Enter pause/delay duration (seconds) at this point:", "1.0");
+            if(delaySec !== null && !isNaN(delaySec)) {
+                r.waypoints[clickedSegmentIdx + 1].delay = (r.waypoints[clickedSegmentIdx + 1].delay || 0) + parseFloat(delaySec);
+                rebuildRobotPath(activeRobotIdx);
+                updateTextArea(activeRobotIdx);
+            }
+            return;
         }
+
+        // Otherwise, add a new waypoint
+        if(r.waypoints.length === 0) {
+            r.waypoints.push({ x: clickedInches.x, y: clickedInches.y, cx1: clickedInches.x, cy1: clickedInches.y, cx2: clickedInches.x, cy2: clickedInches.y, delay: 0 });
+        } else {
+            const last = r.waypoints[r.waypoints.length - 1];
+            last.cx1 = parseFloat((last.x + (clickedInches.x - last.x) * 0.33).toFixed(2));
+            last.cy1 = parseFloat((last.y + (clickedInches.y - last.y) * 0.33).toFixed(2));
+            last.cx2 = parseFloat((last.x + (clickedInches.x - last.x) * 0.66).toFixed(2));
+            last.cy2 = parseFloat((last.y + (clickedInches.y - last.y) * 0.66).toFixed(2));
+
+            r.waypoints.push({
+                x: clickedInches.x, y: clickedInches.y,
+                cx1: clickedInches.x, cy1: clickedInches.y,
+                cx2: clickedInches.x, cy2: clickedInches.y,
+                delay: 0
+            });
+        }
+
+        rebuildRobotPath(activeRobotIdx);
+        updateTextArea(activeRobotIdx);
+        renderScene();
+    });
+
+    function rebuildRobotPath(idx) {
+        const r = robots[idx];
+        r.segments = [];
+        let flatPoints = [];
+        let totalDist = 0;
+
+        if(r.waypoints.length > 0) {
+            flatPoints.push({ x: r.waypoints[0].x, y: r.waypoints[0].y, cumulativeDist: 0 });
+        }
+
+        for(let i=0; i<r.waypoints.length - 1; i++) {
+            const p1 = r.waypoints[i], p2 = r.waypoints[i+1];
+            const seg = [];
+            const steps = Math.max(10, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / 0.5));
+            
+            for(let t=1; t<=steps; t++) {
+                let s = t / steps;
+                let x = Math.pow(1-s, 3) * p1.x + 3 * Math.pow(1-s, 2) * s * p1.cx1 + 3 * (1-s) * s*s * p1.cx2 + s*s*s * p2.x;
+                let y = Math.pow(1-s, 3) * p1.y + 3 * Math.pow(1-s, 2) * s * p1.cy1 + 3 * (1-s) * s*s * p1.cy2 + s*s*s * p2.y;
+                const pt = { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) };
+                
+                const lastPt = flatPoints[flatPoints.length - 1];
+                const d = Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y);
+                totalDist += d;
+                flatPoints.push({ ...pt, cumulativeDist: totalDist, delayNode: (t === steps ? (p2.delay || 0) : 0) });
+                seg.push(pt);
+            }
+            r.segments.push(seg);
+        }
+
+        r.flatPath = flatPoints;
+        r.totalDist = totalDist;
 
         const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
         const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
         const speedInchesPerSec = (rpm / 60) * (Math.PI * dia);
         
-        const duration = speedInchesPerSec > 0 ? totalDist / speedInchesPerSec : 0;
+        // Account for total delay time embedded in path nodes
+        let totalDelay = r.waypoints.reduce((acc, wp) => acc + (wp.delay || 0), 0);
+        r.duration = speedInchesPerSec > 0 ? (totalDist / speedInchesPerSec) + totalDelay : 0;
+    }
 
-        robots[idx] = {
-            path: pts,
-            totalDist: totalDist,
-            duration: duration,
-            active: pts.length > 0
-        };
+    function updateTextArea(idx) {
+        const r = robots[idx];
+        if(r.waypoints.length === 0) {
+            document.getElementById(`r${idx}_input`).value = "";
+            return;
+        }
+        let text = `// [Start Pose Reference]: {X: ${r.waypoints[0].x}, Y: ${r.waypoints[0].y}}\n`;
+        r.waypoints.forEach((wp, i) => {
+            if(i === 0) return;
+            text += `// Segment ${i} | [Waypoint]: {${wp.x}, ${wp.y}} | [Delay]: ${wp.delay || 0}s\n`;
+            text += `// [Control 1]: {${r.waypoints[i-1].cx1}, ${r.waypoints[i-1].cy1}}\n`;
+            text += `// [Control 2]: {${r.waypoints[i-1].cx2}, ${r.waypoints[i-1].cy2}}\n`;
+        });
+        document.getElementById(`r${idx}_input`).value = text;
+    }
+
+    function loadRobotPathFromText(idx) {
+        // Basic sync handler if pasting text directly
+        const raw = document.getElementById(`r${idx}_input`).value;
+        const startRef = raw.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
+        if(!startRef) return;
+
+        let wps = [{ x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), cx1: parseFloat(startRef[1]), cy1: parseFloat(startRef[2]), cx2: parseFloat(startRef[1]), cy2: parseFloat(startRef[2]), delay: 0 }];
+        
+        const blocks = raw.split(/\/\/ Segment \d+/).filter(b => b.includes('Waypoint'));
+        blocks.forEach((block) => {
+            const wpMatch = block.match(/Waypoint\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+            const delayMatch = block.match(/Delay\]: (\d+\.?\d*)s/);
+            const c1Match = block.match(/Control 1\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+            const c2Match = block.match(/Control 2\]: \{(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\}/);
+
+            if(wpMatch && c1Match && c2Match) {
+                wps[wps.length - 1].cx1 = parseFloat(c1Match[1]);
+                wps[wps.length - 1].cy1 = parseFloat(c1Match[2]);
+                wps[wps.length - 1].cx2 = parseFloat(c2Match[1]);
+                wps[wps.length - 1].cy2 = parseFloat(c2Match[2]);
+
+                wps.push({
+                    x: parseFloat(wpMatch[1]), y: parseFloat(wpMatch[2]),
+                    cx1: parseFloat(wpMatch[1]), cy1: parseFloat(wpMatch[2]),
+                    cx2: parseFloat(wpMatch[1]), cy2: parseFloat(wpMatch[2]),
+                    delay: delayMatch ? parseFloat(delayMatch[1]) : 0
+                });
+            }
+        });
+
+        robots[idx].waypoints = wps;
+        rebuildRobotPath(idx);
         renderScene();
     }
 
     function fromInches(ix, iy) { 
-        const cx = fieldOffset + ((ix + (totalFieldInches/2)) * pixelsPerInch);
-        const cy = fieldOffset + (((totalFieldInches/2) - iy) * pixelsPerInch);
-        return { x: cx, y: cy }; 
+        return {
+            x: fieldOffset + ((ix + (totalFieldInches/2)) * pixelsPerInch),
+            y: fieldOffset + (((totalFieldInches/2) - iy) * pixelsPerInch)
+        }; 
+    }
+
+    function toInches(rx, ry) { 
+        return { 
+            x: parseFloat((((rx - fieldOffset) / pixelsPerInch) - (totalFieldInches/2)).toFixed(2)), 
+            y: parseFloat(((totalFieldInches/2) - ((ry - fieldOffset) / pixelsPerInch)).toFixed(2)) 
+        }; 
     }
 
     function checkRender() {
@@ -336,18 +436,33 @@
             ctx.restore();
         }
 
-        // Draw paths for all loaded robots
+        // Draw paths and waypoint markers
         robots.forEach((r, idx) => {
-            if(r.path.length < 2) return;
+            if(r.waypoints.length === 0) return;
             ctx.strokeStyle = robotColors[idx];
             ctx.lineWidth = 2;
             ctx.beginPath();
-            r.path.forEach((p, i) => {
+            r.flatPath.forEach((p, i) => {
                 const c = fromInches(p.x, p.y);
                 if(i === 0) ctx.moveTo(c.x, c.y);
                 else ctx.lineTo(c.x, c.y);
             });
             ctx.stroke();
+
+            // Draw waypoint dots & delays
+            r.waypoints.forEach((wp) => {
+                const c = fromInches(wp.x, wp.y);
+                ctx.fillStyle = robotColors[idx];
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                if(wp.delay > 0) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px Courier New';
+                    ctx.fillText(`⏱ ${wp.delay}s`, c.x + 8, c.y + 3);
+                }
+            });
         });
 
         // Draw robots at current timeline position
@@ -355,20 +470,53 @@
         timeDisplay.innerText = currentTime.toFixed(2) + 's';
 
         robots.forEach((r, idx) => {
-            if(!r.active || r.path.length === 0) return;
-            const delay = parseFloat(document.getElementById(`r${idx}_delay`).value) || 0;
-            
-            if(currentTime < delay) return; // Haven't started yet due to delay
-            
-            const activeTime = currentTime - delay;
-            let progress = r.duration > 0 ? activeTime / r.duration : 1;
-            if(progress > 1) progress = 1; // Stop when path ends
+            if(!r.flatPath || r.flatPath.length === 0) return;
 
-            const pathIdx = Math.min(Math.floor(progress * (r.path.length - 1)), r.path.length - 2);
-            const p1 = fromInches(r.path[pathIdx].x, r.path[pathIdx].y);
-            const p2 = fromInches(r.path[Math.min(pathIdx + 1, r.path.length - 1)].x, r.path[Math.min(pathIdx + 1, r.path.length - 1)].y);
+            const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
+            const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
+            const speed = (rpm / 60) * (Math.PI * dia);
+
+            // Calculate position mapping with intermediate node delays accounted for
+            let targetDist = 0;
+            let elapsedAccum = 0;
+            let currentDelayActive = 0;
+
+            // Simple time-to-distance engine simulation lookup
+            let simulatedDist = 0;
+            let timeTracker = 0;
+            let evaluatedPoint = r.flatPath[0];
+            let nextPoint = r.flatPath[1] || r.flatPath[0];
+
+            // Step through flatPath to evaluate delays and movement progress relative to currentTime
+            // (Linear approximation across kinematic segments)
+            let currentTraveledTime = 0;
+            let activeProgressIndex = 0;
+
+            for(let i = 0; i < r.flatPath.length; i++) {
+                const pt = r.flatPath[i];
+                const prev = i > 0 ? r.flatPath[i-1] : pt;
+                const dSeg = Math.hypot(pt.x - prev.x, pt.y - prev.y);
+                const tSeg = speed > 0 ? dSeg / speed : 0;
+                
+                currentTraveledTime += tSeg;
+                if(pt.delayNode) {
+                    currentTraveledTime += pt.delayNode;
+                }
+
+                if(currentTraveledTime >= currentTime) {
+                    activeProgressIndex = i;
+                    break;
+                }
+                activeProgressIndex = i;
+            }
+
+            evaluatedPoint = r.flatPath[activeProgressIndex];
+            const pAhead = r.flatPath[Math.min(activeProgressIndex + 5, r.flatPath.length - 1)];
             
-            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const p1 = fromInches(evaluatedPoint.x, evaluatedPoint.y);
+            const pAheadScreen = fromInches(pAhead.x, pAhead.y);
+            const angle = Math.atan2(pAheadScreen.y - p1.y, pAheadScreen.x - p1.x);
+
             const w = (parseFloat(document.getElementById(`r${idx}_w`).value) || 15) * pixelsPerInch;
             const l = (parseFloat(document.getElementById(`r${idx}_l`).value) || 15) * pixelsPerInch;
 
@@ -378,7 +526,7 @@
             ctx.strokeStyle = robotColors[idx];
             ctx.lineWidth = 2;
             ctx.strokeRect(-l/2, -w/2, l, w);
-            ctx.fillStyle = robotColors[idx] + '33';
+            ctx.fillStyle = robotColors[idx] + '44';
             ctx.fillRect(-l/2, -w/2, l, w);
             ctx.fillStyle = robotColors[idx];
             ctx.beginPath();
@@ -389,10 +537,6 @@
             ctx.fill();
             ctx.restore();
         });
-    }
-
-    function updateSimulation() {
-        renderScene();
     }
 
     function togglePlay() {
@@ -419,7 +563,7 @@
         }
 
         timeSlider.value = curTime;
-        updateSimulation();
+        renderScene();
 
         if(isPlaying) {
             requestAnimationFrame(animLoop);
@@ -430,7 +574,7 @@
         isPlaying = false;
         playBtn.innerText = "Play Simulation";
         timeSlider.value = 0;
-        updateSimulation();
+        renderScene();
     }
 </script>
 </body>
