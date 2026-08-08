@@ -528,20 +528,24 @@
             document.getElementById(`r${idx}_input`).value = "";
             return;
         }
-        let text = `// [Start Pose]: {X: ${r.waypoints[0].x}, Y: ${r.waypoints[0].y}} | [Delay]: ${r.waypoints[0].delay || 0}s\n`;
+        let text = `// [Field]: MATCH\n// [ShowHandles]: true\n// [ShowArrows]: true\n// [Start Pose Reference]: {X: ${r.waypoints[0].x}, Y: ${r.waypoints[0].y}}\n`;
         r.waypoints.forEach((wp, i) => {
-            if (i === 0) return;
-            text += `// Seg ${i} | Waypoint: {${wp.x}, ${wp.y}} | Delay: ${wp.delay || 0}s\n`;
-            text += `// Handle1: {${r.waypoints[i-1].cx1}, ${r.waypoints[i-1].cy1}} | Handle2: {${r.waypoints[i-1].cx2}, ${r.waypoints[i-1].cy2}}\n`;
+            text += `{${wp.x}, ${wp.y}},\n`;
+            if (i < r.waypoints.length - 1) {
+                text += `// Segment ${i+1} | [Color]: ${robotColors[idx]} | [Res]: 5\n`;
+                text += `// [Control 1]: {${wp.cx1}, ${wp.cy1}}\n`;
+                text += `// [Control 2]: {${wp.cx2}, ${wp.cy2}}\n`;
+                text += `// [Waypoint]: {${r.waypoints[i+1].x}, ${r.waypoints[i+1].y}}\n`;
+            }
         });
         document.getElementById(`r${idx}_input`).value = text;
     }
 
     function loadRobotPathFromText(idx) {
         const raw = document.getElementById(`r${idx}_input`).value;
-        const startRef = raw.match(/\[Start Pose\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
+        const startRef = raw.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
         if (!startRef) {
-            alert("Invalid or missing Start Pose format in text box.");
+            alert("Invalid or missing Start Pose Reference format in text box.");
             return;
         }
 
@@ -552,38 +556,33 @@
             delay: 0 
         }];
 
-        const segRegex = /Waypoint: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\} \| Delay: (\d+\.?\d*)s/g;
-        const handleRegex = /Handle1: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\} \| Handle2: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\}/g;
+        const segRegex = /\/\/ Segment \d+[^]*?\/\/ \[Control 1\]: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\}\s*\/\/ \[Control 2\]: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\}\s*\/\/ \[Waypoint\]: \{(-?\d+\.?\d*), (-?\d+\.?\d*)\}/g;
 
-        let matchSeg, matchH;
-        let segsData = [];
-        while ((matchSeg = segRegex.exec(raw)) !== null) {
-            segsData.push({ x: parseFloat(matchSeg[1]), y: parseFloat(matchSeg[2]), delay: parseFloat(matchSeg[3]) });
-        }
+        let match;
+        while ((match = segRegex.exec(raw)) !== null) {
+            const cx1 = parseFloat(match[1]);
+            const cy1 = parseFloat(match[2]);
+            const cx2 = parseFloat(match[3]);
+            const cy2 = parseFloat(match[4]);
+            const wx = parseFloat(match[5]);
+            const wy = parseFloat(match[6]);
 
-        let handlesData = [];
-        while ((matchH = handleRegex.exec(raw)) !== null) {
-            handlesData.push({
-                cx1: parseFloat(matchH[1]), cy1: parseFloat(matchH[2]),
-                cx2: parseFloat(matchH[3]), cy2: parseFloat(matchH[4])
-            });
-        }
-
-        for (let i = 0; i < segsData.length; i++) {
-            if (i > 0 && handlesData[i-1]) {
-                wps[i-1].cx1 = handlesData[i-1].cx1;
-                wps[i-1].cy1 = handlesData[i-1].cy1;
-                wps[i-1].cx2 = handlesData[i-1].cx2;
-                wps[i-1].cy2 = handlesData[i-1].cy2;
+            // Assign handles to the previous waypoint
+            if (wps.length > 0) {
+                wps[wps.length - 1].cx1 = cx1;
+                wps[wps.length - 1].cy1 = cy1;
+                wps[wps.length - 1].cx2 = cx2;
+                wps[wps.length - 1].cy2 = cy2;
             }
+
             wps.push({
-                x: segsData[i].x,
-                y: segsData[i].y,
-                cx1: segsData[i].x,
-                cy1: segsData[i].y,
-                cx2: segsData[i].x,
-                cy2: segsData[i].y,
-                delay: segsData[i].delay
+                x: wx,
+                y: wy,
+                cx1: wx,
+                cy1: wy,
+                cx2: wx,
+                cy2: wy,
+                delay: 0
             });
         }
 
@@ -622,7 +621,9 @@
 
         const evaluatedPoint = r.flatPath[activeIdx];
         const pAhead = r.flatPath[Math.min(activeIdx + 3, r.flatPath.length - 1)];
-        const angle = Math.atan2(pAhead.y - evaluatedPoint.y, pAhead.x - evaluatedPoint.x);
+        
+        // Fixed Y inversion for angle calculation to eliminate diagonal heading skew
+        const angle = Math.atan2(-(pAhead.y - evaluatedPoint.y), pAhead.x - evaluatedPoint.x);
 
         const w = parseFloat(document.getElementById(`r${idx}_w`).value) || 15;
         const l = parseFloat(document.getElementById(`r${idx}_l`).value) || 15;
