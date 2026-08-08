@@ -335,7 +335,52 @@
         renderScene();
     });
 
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const clickedInches = toInches(mouseX, mouseY);
+
+        const r = robots[activeRobotIdx];
+        const hitRadius = 14;
+
+        let clickedWpIdx = -1;
+        for (let i = 0; i < r.waypoints.length; i++) {
+            const wp = r.waypoints[i];
+            const ptScreen = fromInches(wp.x, wp.y);
+            if (Math.hypot(mouseX - ptScreen.x, mouseY - ptScreen.y) < hitRadius) {
+                clickedWpIdx = i;
+                break;
+            }
+        }
+
+        if (clickedWpIdx !== -1) {
+            const now = Date.now();
+            if (now - lastClickTime < 300 && lastClickedWpIdx === clickedWpIdx) {
+                straightenWaypoint(activeRobotIdx, clickedWpIdx);
+                lastClickTime = 0;
+                lastClickedWpIdx = -1;
+                return;
+            }
+            lastClickTime = now;
+            lastClickedWpIdx = clickedWpIdx;
+
+            if (e.shiftKey) {
+                const wp = r.waypoints[clickedWpIdx];
+                const delaySec = prompt(`Enter exact delay duration for waypoint ${clickedWpIdx} (seconds):`, wp.delay || 0);
+                if (delaySec !== null && !isNaN(delaySec)) {
+                    wp.delay = Math.max(0, parseFloat(delaySec));
+                    rebuildRobotPath(activeRobotIdx);
+                    updateTextArea(activeRobotIdx);
+                    renderScene();
+                    runCollisionCheck();
+                }
+            }
+        }
+    });
+
     canvas.addEventListener('mousedown', (e) => {
+        if (dragTarget) return;
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
@@ -349,27 +394,7 @@
             const ptScreen = fromInches(wp.x, wp.y);
 
             if (Math.hypot(mouseX - ptScreen.x, mouseY - ptScreen.y) < hitRadius) {
-                const now = Date.now();
-                if (now - lastClickTime < 300 && lastClickedWpIdx === i) {
-                    straightenWaypoint(activeRobotIdx, i);
-                    lastClickTime = 0;
-                    lastClickedWpIdx = -1;
-                    return;
-                }
-                lastClickTime = now;
-                lastClickedWpIdx = i;
-
-                if (e.shiftKey) {
-                    const delaySec = prompt(`Enter exact delay duration for waypoint ${i} (seconds):`, wp.delay || 0);
-                    if (delaySec !== null && !isNaN(delaySec)) {
-                        wp.delay = Math.max(0, parseFloat(delaySec));
-                        rebuildRobotPath(activeRobotIdx);
-                        updateTextArea(activeRobotIdx);
-                        renderScene();
-                        runCollisionCheck();
-                    }
-                    return;
-                }
+                if (e.shiftKey) return; // handled in click
                 dragTarget = { wpIdx: i, type: 'point' };
                 return;
             }
@@ -567,7 +592,6 @@
             const wx = parseFloat(match[5]);
             const wy = parseFloat(match[6]);
 
-            // Assign handles to the previous waypoint
             if (wps.length > 0) {
                 wps[wps.length - 1].cx1 = cx1;
                 wps[wps.length - 1].cy1 = cy1;
@@ -621,8 +645,6 @@
 
         const evaluatedPoint = r.flatPath[activeIdx];
         const pAhead = r.flatPath[Math.min(activeIdx + 3, r.flatPath.length - 1)];
-        
-        // Fixed Y inversion for angle calculation to eliminate diagonal heading skew
         const angle = Math.atan2(-(pAhead.y - evaluatedPoint.y), pAhead.x - evaluatedPoint.x);
 
         const w = parseFloat(document.getElementById(`r${idx}_w`).value) || 15;
