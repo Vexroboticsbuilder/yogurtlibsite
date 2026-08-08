@@ -171,6 +171,9 @@
                     <span>Dia (in):</span><input type="number" id="r0_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
+                    <span>Accel (in/s&sup2;):</span><input type="number" id="r0_accel" value="120" step="10" min="0" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                </div>
+                <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()"></textarea>
@@ -179,6 +182,7 @@
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(0)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(0)">Clear Path</button>
                 </div>
+                <div class="path-time-readout" id="r0_pathtime" style="margin-top:4px; font-size:0.7rem; color:#aaa; text-align:right;">Path time: --</div>
             </div>
 
             <div id="card_1" class="robot-config-card" style="--robot-color: #49B6FF; --card-bg: #192633; --robot-glow: rgba(73,182,255,0.3);" onclick="selectRobot(1)">
@@ -186,6 +190,9 @@
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                     <span>Dia (in):</span><input type="number" id="r1_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                </div>
+                <div class="config-row">
+                    <span>Accel (in/s&sup2;):</span><input type="number" id="r1_accel" value="120" step="10" min="0" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
@@ -196,6 +203,7 @@
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(1)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(1)">Clear Path</button>
                 </div>
+                <div class="path-time-readout" id="r1_pathtime" style="margin-top:4px; font-size:0.7rem; color:#aaa; text-align:right;">Path time: --</div>
             </div>
 
             <div id="card_2" class="robot-config-card" style="--robot-color: #c2862c; --card-bg: #2c2418; --robot-glow: rgba(194, 107, 44, 0.3);" onclick="selectRobot(2)">
@@ -203,6 +211,9 @@
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                     <span>Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                </div>
+                <div class="config-row">
+                    <span>Accel (in/s&sup2;):</span><input type="number" id="r2_accel" value="120" step="10" min="0" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
@@ -213,6 +224,7 @@
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(2)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(2)">Clear Path</button>
                 </div>
+                <div class="path-time-readout" id="r2_pathtime" style="margin-top:4px; font-size:0.7rem; color:#aaa; text-align:right;">Path time: --</div>
             </div>
 
             <div id="card_3" class="robot-config-card" style="--robot-color: #FF3949; --card-bg: #331c1f; --robot-glow: rgba(255,57,73,0.3);" onclick="selectRobot(3)">
@@ -220,6 +232,9 @@
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                     <span>Dia (in):</span><input type="number" id="r3_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                </div>
+                <div class="config-row">
+                    <span>Accel (in/s&sup2;):</span><input type="number" id="r3_accel" value="120" step="10" min="0" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
                     <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
@@ -230,6 +245,7 @@
                     <button class="secondary-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearPauses(3)">Clear Pauses</button>
                     <button class="danger-btn" style="flex:1; padding:4px; font-size:0.7rem;" onclick="event.stopPropagation(); clearRobotPath(3)">Clear Path</button>
                 </div>
+                <div class="path-time-readout" id="r3_pathtime" style="margin-top:4px; font-size:0.7rem; color:#aaa; text-align:right;">Path time: --</div>
             </div>
         </div>
     </div>
@@ -596,41 +612,182 @@
         runCollisionCheck();
     }
 
-    function getRobotStateAtTime(idx, targetTime) {
+    // Duration to cover `dist` inches starting and ending at rest, accelerating
+    // and decelerating at `accel` in/s^2, capped at `vMax` in/s (trapezoidal
+    // velocity profile; falls back to a triangular profile if vMax is never reached).
+    function trapDuration(dist, vMax, accel) {
+        if (dist <= 0) return 0;
+        if (accel <= 0 || vMax <= 0) return vMax > 0 ? dist / vMax : Infinity;
+
+        const distToMaxV = (vMax * vMax) / (2 * accel);
+        if (distToMaxV * 2 >= dist) {
+            const peakV = Math.sqrt(accel * dist);
+            return (2 * peakV) / accel;
+        }
+        const tAccel = vMax / accel;
+        const cruiseDist = dist - 2 * distToMaxV;
+        const tCruise = cruiseDist / vMax;
+        return 2 * tAccel + tCruise;
+    }
+
+    // Inverse of trapDuration: distance covered after `t` seconds into the ramp.
+    function trapDistanceAtTime(t, dist, vMax, accel) {
+        if (dist <= 0 || t <= 0) return 0;
+        if (accel <= 0 || vMax <= 0) return Math.min(vMax * t, dist);
+
+        const distToMaxV = (vMax * vMax) / (2 * accel);
+        if (distToMaxV * 2 >= dist) {
+            const peakV = Math.sqrt(accel * dist);
+            const tHalf = peakV / accel;
+            if (t <= tHalf) return 0.5 * accel * t * t;
+            const t2 = t - tHalf;
+            return Math.min(dist, (dist / 2) + peakV * t2 - 0.5 * accel * t2 * t2);
+        }
+        const tAccel = vMax / accel;
+        const cruiseDist = dist - 2 * distToMaxV;
+        const tCruise = cruiseDist / vMax;
+        if (t <= tAccel) return 0.5 * accel * t * t;
+        if (t <= tAccel + tCruise) return distToMaxV + vMax * (t - tAccel);
+        const t2 = t - tAccel - tCruise;
+        return Math.min(dist, dist - distToMaxV + vMax * t2 - 0.5 * accel * t2 * t2);
+    }
+
+    // Splits a robot's flatPath into "runs" separated by explicit pause waypoints
+    // (delayNode > 0), and works out how long each run takes under the
+    // accel/vMax profile. Cached on robots[idx].timing until the path or
+    // rpm/dia/accel inputs change (see runCollisionCheck).
+    function buildRobotTiming(idx) {
         const r = robots[idx];
-        if (!r.flatPath || r.flatPath.length === 0) return null;
+        const timing = { runs: [], totalTime: 0 };
+
+        if (!r.flatPath || r.flatPath.length === 0) {
+            r.timing = timing;
+            return timing;
+        }
 
         const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
         const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
-        const speed = (rpm / 60) * (Math.PI * dia);
+        const accel = parseFloat(document.getElementById(`r${idx}_accel`).value) || 0;
+        const vMax = (rpm / 60) * (Math.PI * dia);
 
-        let currentTraveledTime = 0;
-        let activeIdx = 0;
+        let startIdx = 0;
+        let cumTime = r.flatPath[0].delayNode || 0; // delay parked at the very start, before moving
 
-        for (let i = 0; i < r.flatPath.length; i++) {
-            const pt = r.flatPath[i];
-            const prev = i > 0 ? r.flatPath[i-1] : pt;
-            const dSeg = Math.hypot(pt.x - prev.x, pt.y - prev.y);
-            const tSeg = speed > 0 ? dSeg / speed : 0;
-            
-            currentTraveledTime += tSeg;
-            if (pt.delayNode) currentTraveledTime += pt.delayNode;
+        for (let i = 1; i < r.flatPath.length; i++) {
+            const isLast = (i === r.flatPath.length - 1);
+            const hasDelay = r.flatPath[i].delayNode && r.flatPath[i].delayNode > 0;
 
-            if (currentTraveledTime >= targetTime) {
-                activeIdx = i;
-                break;
+            if (hasDelay || isLast) {
+                const cum = [0];
+                for (let j = startIdx + 1; j <= i; j++) {
+                    const d = Math.hypot(r.flatPath[j].x - r.flatPath[j-1].x, r.flatPath[j].y - r.flatPath[j-1].y);
+                    cum.push(cum[cum.length - 1] + d);
+                }
+                const runDist = cum[cum.length - 1];
+                const runDuration = trapDuration(runDist, vMax, accel);
+                const delayAfter = r.flatPath[i].delayNode || 0;
+
+                timing.runs.push({
+                    startIdx, endIdx: i, cum,
+                    dist: runDist,
+                    duration: runDuration,
+                    startTime: cumTime,
+                    delayAfter
+                });
+
+                cumTime += runDuration + delayAfter;
+                startIdx = i;
             }
-            activeIdx = i;
         }
 
-        const evaluatedPoint = r.flatPath[activeIdx];
-        const pAhead = r.flatPath[Math.min(activeIdx + 3, r.flatPath.length - 1)];
-        const angle = Math.atan2(-(pAhead.y - evaluatedPoint.y), pAhead.x - evaluatedPoint.x);
+        timing.totalTime = cumTime;
+        r.timing = timing;
+        return timing;
+    }
 
+    // Interpolated (x,y) at a given distance-traveled within a run (not snapped
+    // to the nearest sampled bezier point, so motion is smooth at any framerate).
+    function pointAtDistanceInRun(flatPath, run, dist) {
+        if (dist <= 0) return { x: flatPath[run.startIdx].x, y: flatPath[run.startIdx].y };
+        if (dist >= run.dist) return { x: flatPath[run.endIdx].x, y: flatPath[run.endIdx].y };
+
+        const cum = run.cum;
+        for (let k = 1; k < cum.length; k++) {
+            if (cum[k] >= dist) {
+                const segStart = flatPath[run.startIdx + k - 1];
+                const segEnd = flatPath[run.startIdx + k];
+                const segLen = cum[k] - cum[k-1];
+                const segT = segLen > 0 ? (dist - cum[k-1]) / segLen : 0;
+                return {
+                    x: segStart.x + (segEnd.x - segStart.x) * segT,
+                    y: segStart.y + (segEnd.y - segStart.y) * segT
+                };
+            }
+        }
+        return { x: flatPath[run.endIdx].x, y: flatPath[run.endIdx].y };
+    }
+
+    function getRobotStateAtTime(idx, targetTime) {
+        const r = robots[idx];
+        if (!r.flatPath || r.flatPath.length === 0) return null;
+        if (!r.timing) buildRobotTiming(idx);
+        const timing = r.timing;
+
+        const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
+        const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
+        const accel = parseFloat(document.getElementById(`r${idx}_accel`).value) || 0;
+        const vMax = (rpm / 60) * (Math.PI * dia);
+
+        let evaluatedPoint, headingFrom, headingTo;
+
+        if (timing.runs.length === 0) {
+            evaluatedPoint = { x: r.flatPath[0].x, y: r.flatPath[0].y };
+            headingFrom = evaluatedPoint;
+            headingTo = { x: evaluatedPoint.x + 1, y: evaluatedPoint.y }; // arbitrary, no path to face along
+        } else {
+            let activeRun = timing.runs[timing.runs.length - 1];
+            for (let i = 0; i < timing.runs.length; i++) {
+                const run = timing.runs[i];
+                if (targetTime <= run.startTime + run.duration) {
+                    activeRun = run;
+                    break;
+                }
+            }
+
+            const localT = Math.max(0, Math.min(targetTime - activeRun.startTime, activeRun.duration));
+            const distTraveled = trapDistanceAtTime(localT, activeRun.dist, vMax, accel);
+            evaluatedPoint = pointAtDistanceInRun(r.flatPath, activeRun, distTraveled);
+
+            const lookahead = 2; // inches, for heading
+            const dAhead = Math.min(distTraveled + lookahead, activeRun.dist);
+            const dBehind = Math.max(distTraveled - lookahead, 0);
+            headingTo = pointAtDistanceInRun(r.flatPath, activeRun, dAhead);
+            headingFrom = pointAtDistanceInRun(r.flatPath, activeRun, dBehind);
+            if (dAhead === dBehind) {
+                // degenerate zero-length run (e.g. back-to-back pause waypoints); no facing direction to derive
+                headingFrom = evaluatedPoint;
+                headingTo = { x: evaluatedPoint.x + 1, y: evaluatedPoint.y };
+            }
+        }
+
+        const angle = Math.atan2(-(headingTo.y - headingFrom.y), headingTo.x - headingFrom.x);
         const w = parseFloat(document.getElementById(`r${idx}_w`).value) || 15;
         const l = parseFloat(document.getElementById(`r${idx}_l`).value) || 15;
 
         return { x: evaluatedPoint.x, y: evaluatedPoint.y, angle, w, l };
+    }
+
+    function updatePathTimeDisplays() {
+        for (let i = 0; i < robots.length; i++) {
+            const el = document.getElementById(`r${i}_pathtime`);
+            if (!el) continue;
+            const r = robots[i];
+            if (!r.flatPath || r.flatPath.length === 0 || !r.timing) {
+                el.innerText = "Path time: --";
+            } else {
+                el.innerText = `Path time: ${r.timing.totalTime.toFixed(2)}s`;
+            }
+        }
     }
 
     function checkBoxesOverlap(b1, b2) {
@@ -642,6 +799,11 @@
     }
 
     function runCollisionCheck() {
+        for (let i = 0; i < robots.length; i++) {
+            buildRobotTiming(i);
+        }
+        updatePathTimeDisplays();
+
         const panel = document.getElementById('collisionPanel');
         const heading = document.getElementById('collisionHeading');
         const badge = document.getElementById('collisionCountBadge');
