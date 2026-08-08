@@ -5,16 +5,14 @@
   --panel: #0e0e12;
   --panel-border: #1f1f26;
   --accent: #8c52ff;
-  --accent-soft: rgba(140, 82, 255, 0.14);
-  --accent-line: rgba(140, 82, 255, 0.35);
+  --accent-soft: rgba(203,108,230, 0.14);
+  --accent-line: rgba(203,108,230, 0.35);
   --cyan: #00ffff;
   --text: #ffffff;
   --muted: #8c8c96;
   --faint: #55555f;
   
   /* UI Theming & Extra Colors for specific tools */
-  --accent-on: #8c52ff;
-  --accent-off: #2c1952;
   --start: #00ff00;
   --end: #ff0000;
   --handle1: #00ffff;
