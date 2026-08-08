@@ -129,7 +129,7 @@
         
         <div class="sidebar-controls">
             <h3 style="margin:0 0 5px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
-            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Select active robot card to add/drag waypoints, curves, or pauses.</span>
+            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Click to select active robot. **Shift + Click** a node on field to set its pause delay directly.</span>
             
             <!-- Robot Cards -->
             <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff; --card-bg: #221c2d; --robot-glow: rgba(140,82,255,0.3);" onclick="selectRobot(0)">
@@ -239,7 +239,7 @@
 
     let isPlaying = false;
     let lastTimestamp = null;
-    let dragTarget = null; // { wpIdx: number, type: 'point'|'cx1'|'cy1'|'cx2'|'cy2' }
+    let dragTarget = null;
 
     function selectRobot(idx) {
         activeRobotIdx = idx;
@@ -262,7 +262,6 @@
         renderScene();
     });
 
-    // Handle Drag and Mouse interactions locked strictly to active selected robot
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -279,8 +278,8 @@
             // Check main point
             const ptScreen = fromInches(wp.x, wp.y);
             if (Math.hypot(mouseX - ptScreen.x, mouseY - ptScreen.y) < hitRadius) {
-                if (e.shiftKey) { // Shift + Click to edit pause directly
-                    const delaySec = prompt("Enter delay duration (seconds):", wp.delay || 0);
+                if (e.shiftKey) { // Shift + Click to overwrite delay explicitly
+                    const delaySec = prompt(`Enter exact delay duration for waypoint ${i} (seconds):`, wp.delay || 0);
                     if (delaySec !== null && !isNaN(delaySec)) {
                         wp.delay = Math.max(0, parseFloat(delaySec));
                         rebuildRobotPath(activeRobotIdx);
@@ -347,7 +346,6 @@
             const dy = pos.y - wp.y;
             wp.x = pos.x;
             wp.y = pos.y;
-            // Shift control handles relative to point movement
             wp.cx1 += dx; wp.cy1 += dy;
             wp.cx2 += dx; wp.cy2 += dy;
         } else if (dragTarget.type === 'c1') {
@@ -378,7 +376,6 @@
         const r = robots[idx];
         r.segments = [];
         let flatPoints = [];
-        let totalDist = 0;
 
         if (r.waypoints.length > 0) {
             flatPoints.push({ x: r.waypoints[0].x, y: r.waypoints[0].y, delayNode: r.waypoints[0].delay || 0 });
@@ -461,7 +458,6 @@
             ctx.restore();
         }
 
-        // Draw paths & bezier controls
         robots.forEach((r, idx) => {
             if (r.waypoints.length === 0) return;
             const isActive = (idx === activeRobotIdx);
@@ -478,12 +474,10 @@
             });
             ctx.stroke();
 
-            // Render Waypoints & Control Handles ONLY for Active Selected Robot
             if (isActive) {
                 r.waypoints.forEach((wp, i) => {
                     const c = fromInches(wp.x, wp.y);
                     
-                    // Draw Main Waypoint Node
                     ctx.fillStyle = robotColors[idx];
                     ctx.beginPath();
                     ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
@@ -492,20 +486,17 @@
                     ctx.lineWidth = 1;
                     ctx.stroke();
 
-                    // Render Bezier Curve Handles
                     if (i < r.waypoints.length - 1) {
                         const c1 = fromInches(wp.cx1, wp.cy1);
                         const c2 = fromInches(wp.cx2, wp.cy2);
                         const pNext = fromInches(r.waypoints[i+1].x, r.waypoints[i+1].y);
 
-                        // Lines connecting handles
                         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                         ctx.beginPath();
                         ctx.moveTo(c.x, c.y); ctx.lineTo(c1.x, c1.y);
                         ctx.moveTo(pNext.x, pNext.y); ctx.lineTo(c2.x, c2.y);
                         ctx.stroke();
 
-                        // Handles points
                         ctx.fillStyle = '#ffcc00';
                         ctx.beginPath();
                         ctx.arc(c1.x, c1.y, 4, 0, Math.PI * 2);
@@ -526,7 +517,6 @@
         const currentTime = parseFloat(timeSlider.value);
         timeDisplay.innerText = currentTime.toFixed(2) + 's';
 
-        // Render Robots on Field
         robots.forEach((r, idx) => {
             if (!r.flatPath || r.flatPath.length === 0) return;
 
@@ -584,7 +574,6 @@
         });
     }
 
-    // Fully Functional Engine Timer Simulation Loop
     function togglePlay() {
         if (isPlaying) {
             isPlaying = false;
