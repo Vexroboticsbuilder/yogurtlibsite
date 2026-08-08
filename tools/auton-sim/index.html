@@ -720,8 +720,8 @@
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(-8, -4);
-        ctx.lineTo(-8, 4);
+        ctx.lineTo(-10, -7);
+        ctx.lineTo(-10, 7);
         ctx.closePath();
         ctx.fill();
         ctx.restore();
@@ -743,7 +743,7 @@
             const isActive = (idx === activeRobotIdx);
 
             ctx.strokeStyle = robotColors[idx];
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 4;
             ctx.globalAlpha = isSnapshot ? 0.8 : (isActive ? 1.0 : 0.4);
 
             ctx.beginPath();
@@ -779,7 +779,7 @@
                     ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 3;
                     ctx.stroke();
 
                     if (i < r.waypoints.length - 1) {
@@ -793,7 +793,7 @@
                         ctx.moveTo(pNext.x, pNext.y); ctx.lineTo(c2.x, c2.y);
                         ctx.stroke();
 
-                        ctx.fillStyle = '#ffcc00';
+                        ctx.fillStyle = '#098200';
                         ctx.beginPath();
                         ctx.arc(c1.x, c1.y, 4, 0, Math.PI * 2);
                         ctx.arc(c2.x, c2.y, 4, 0, Math.PI * 2);
