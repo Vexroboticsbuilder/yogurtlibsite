@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="../assets/style.css">
 <style>
   article { max-width: 720px; margin: 0 auto; padding: 60px 32px 80px; }
-  .back-link { display: inline-block; margin-bottom: 0px; color: var(--accent); font-family: var(--font-mono); font-size: 1.5rem; }
-  .back-link:hover { color: var(--accent-soft); }
+  /* .back-link { display: inline-block; margin-bottom: 0px; color: var(--accent); font-family: var(--font-mono); font-size: 1.5rem; }
+  .back-link:hover { color: var(--accent-soft); } */
   article h1 { font-family: var(--font-display); font-size: 1.9rem; margin: 12px 0 6px; }
   article h2 { font-family: var(--font-display); font-size: 1.15rem; margin: 40px 0 12px; border-top: 1px solid var(--panel-border); padding-top: 28px; }
   article p, article li { color: #cfcfd6; line-height: 1.7; font-size: 0.92rem; }
@@ -38,8 +38,14 @@
 </header>
 
 <article>
-  <a class="back-link" href="index.html">&lt;- Back</a><br>
-  <span class="eyebrow" style="color: var(--text);"></span>Custom Pather</span>
+  <div class="nav-link-group">
+    <a class="back-link" href="index.html">&lt;- Home</a>
+    <div class="nav-link-group--right">
+      <a class="forward-link" href="data-visuals.html">Next -&gt;</a><br>
+      <span class="eyebrow" style="color: var(--text);">Data Visuals Docs</span>
+    </div><br>
+    <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+  </div>
   <h1>Getting started</h1>
   <p>Custom Pather draws bezier autonomous paths on the competition field and exports them as coordinate arrays you can paste into your code.</p>
 
@@ -72,8 +78,14 @@
     <li><code>Snapshot</code> — download a PNG of the current field and path.</li>
   </ul>
   
-  <a class="back-link" href="index.html">&lt;- Back</a><br>
-  <span class="eyebrow" style="color: var(--text);"></span>Custom Pather</span>
+  <div class="nav-link-group">
+    <a class="back-link" href="index.html">&lt;- Home</a>
+    <div class="nav-link-group--right">
+      <a class="forward-link" href="data-visuals.html">Next -&gt;</a><br>
+      <span class="eyebrow" style="color: var(--text);">Data Visuals Docs</span>
+    </div><br>
+    <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+  </div>
 </article>
 
 <footer class="site-footer">

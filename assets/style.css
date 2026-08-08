@@ -180,3 +180,25 @@ a { color: inherit; text-decoration: none; }
   color: var(--accent);
   border: 1px solid var(--accent-line);
 }
+
+.back-link,
+.forward-link {
+  display: inline-block;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+}
+
+.back-link:hover,
+.forward-link:hover {
+  color: var(--accent-soft);
+}
+
+.nav-link-group {
+  overflow: hidden;
+}
+
+.nav-link-group--right {
+  float: right;
+  text-align: right;
+}

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YL Docs - Data Visuals</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  article { max-width: 720px; margin: 0 auto; padding: 60px 32px 80px; }
+  /* .back-link { display: inline-block; margin-bottom: 0px; color: var(--accent); font-family: var(--font-mono); font-size: 1.5rem; }
+  .back-link:hover { color: var(--accent-soft); } */
+  article h1 { font-family: var(--font-display); font-size: 1.9rem; margin: 12px 0 6px; }
+  article h2 { font-family: var(--font-display); font-size: 1.15rem; margin: 40px 0 12px; border-top: 1px solid var(--panel-border); padding-top: 28px; }
+  article p, article li { color: #cfcfd6; line-height: 1.7; font-size: 0.92rem; }
+  article ul { padding-left: 20px; }
+  article code {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent);
+  }
+  kbd {
+    background: #1a1a1e; border: 1px solid #333; border-radius: 4px;
+    padding: 1px 6px; font-family: var(--font-mono); font-size: 0.8em;
+  }
+  
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><img src="../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// DOCS // Pather</span></div>
+  <nav class="site-nav">
+    <a href="../index.html">Home</a>
+    <a href="../tools/custom-pather/index.html">Custom Pather</a>
+    <a href="../tools/data-visualizer/index.html">Data Visualizer</a>
+    <a href="../tools/auton-sim/index.html">Autonomus Simulator</a>
+    <a href="index.html" class="active">Docs</a>
+  </nav>
+</header>
+
+<article>
+  <div class="nav-link-group">
+    <a class="back-link" href="index.html">&lt;- Home</a>
+    <div class="nav-link-group--right">
+      <a class="forward-link" href="index.html">Next -&gt;</a><br>
+      <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+    </div><br>
+    <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+  </div>
+  <h1>Getting started</h1>
+  <p>The data visualizer is built for quick debugging when coding or tuning atonomus paths</p>
+
+  <h2>Retreving data</h2>
+  <ul>
+    <li>Use the PROS termimal via pros mut or pros t to establish terminal connection while the controller is plugged into a laptop</li>
+    <li>Start an autonomus run via either timed run or autonomus skills on the controller</li>
+    <li>Data should print to the PROS terminal, including: X and Y position, heading, and IMU data (Represented by MU1/MU2/etc)</li>
+    <li>When the program is done, or if it needs to be stopped, simply hold the power button on the controller, this will pause the data prints to the terminal</li>
+  </ul>
+
+  <h2>Main use case</h2>
+  <p>The data visuals tool was designed to try and reduce inconsitancies when tuning autonomus programs. It will help expose if the robot thinks it is in the correct position when in reality it is not, meaning that there might be issues with the localiztion system (Odom, DSR, etc). It can also revieal code errors, such as the robot knowing that it is off, and still attemping to make it right, possibly meaning that timeouts or tolerances need to be tuned.</p>
+
+  <h2>Loading data</h2>
+  <ul>
+    <li>Simply copy the code out of the PROS terminal and paste it into tool</li>
+    <li>The past 5 runs are stored LOCALLY on your browser, with the oldest being automatically deleted once the 5 runs is full</li>
+    <li>We reccomend keeping a backup of important runs on external sites, such as a channel in your team discord. (Logs can be put in a text file to be uploaded to discord)</li>
+  </ul>
+
+  <h2>Other controls</h2>
+  <ul>
+    <li><code>Robot size</code> Input robot size in inches to better debug the data</li>
+    <li><code>Position</code> / <code>Heading</code> Extact data for easy referance from the current data point</li>
+    <li><code>Match</code> / <code>Skills</code>  switch between field backgrounds</li>
+    <li><code>Warnings</code> Warnings will appear in a box at the top for multiple reasons: Motor temperature and IMU drift. Motor temp is warned if the motors ar over 40 degrees, IMU drift is warned if any IMU's read over 10 degrees, it will also highlight the line(s) that contain errors</li>
+  </ul>
+  <div class="nav-link-group">
+    <a class="back-link" href="pather.html">&lt;- Back</a>
+    <div class="nav-link-group--right">
+      <a class="forward-link" href="index.html">Next -&gt;</a><br>
+      <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+    </div><br>
+    <span class="eyebrow" style="color: var(--text);">Pather Docs</span>
+  </div>
+</article>
+
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Docs / Data Visuals</span>
+</footer>
+
+</body>
+</html>
