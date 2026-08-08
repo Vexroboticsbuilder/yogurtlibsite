@@ -68,8 +68,9 @@
             transition: 0.2s;
         }
         .robot-config-card.selected {
-            border-color: var(--accent);
-            background: #221c2d;
+            border-color: var(--robot-color, var(--accent));
+            background: var(--card-bg, #221c2d);
+            box-shadow: 0 0 10px var(--robot-glow, rgba(140, 82, 255, 0.2));
         }
 
         .controls { 
@@ -132,7 +133,7 @@
             <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Click a card to select active target for canvas placement.</span>
             
             <!-- Robot Cards -->
-            <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff;" onclick="selectRobot(0)">
+            <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff; --card-bg: #221c2d; --robot-glow: rgba(140,82,255,0.3);" onclick="selectRobot(0)">
                 <b>Robot 1 (Purple)</b>
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r0_rpm" value="360" step="10" onclick="event.stopPropagation()">
@@ -142,9 +143,10 @@
                     <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(0)"></textarea>
+                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(0)">Clear Pauses</button>
             </div>
 
-            <div id="card_1" class="robot-config-card" style="--robot-color: #49B6FF;" onclick="selectRobot(1)">
+            <div id="card_1" class="robot-config-card" style="--robot-color: #49B6FF; --card-bg: #192633; --robot-glow: rgba(73,182,255,0.3);" onclick="selectRobot(1)">
                 <b>Robot 2 (Blue)</b>
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10" onclick="event.stopPropagation()">
@@ -154,9 +156,10 @@
                     <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r1_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(1)"></textarea>
+                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(1)">Clear Pauses</button>
             </div>
 
-            <div id="card_2" class="robot-config-card" style="--robot-color: #2CC259;" onclick="selectRobot(2)">
+            <div id="card_2" class="robot-config-card" style="--robot-color: #2CC259; --card-bg: #182c1f; --robot-glow: rgba(44,194,89,0.3);" onclick="selectRobot(2)">
                 <b>Robot 3 (Green)</b>
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10" onclick="event.stopPropagation()">
@@ -166,9 +169,10 @@
                     <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r2_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(2)"></textarea>
+                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(2)">Clear Pauses</button>
             </div>
 
-            <div id="card_3" class="robot-config-card" style="--robot-color: #FF3949;" onclick="selectRobot(3)">
+            <div id="card_3" class="robot-config-card" style="--robot-color: #FF3949; --card-bg: #331c1f; --robot-glow: rgba(255,57,73,0.3);" onclick="selectRobot(3)">
                 <b>Robot 4 (Red)</b>
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10" onclick="event.stopPropagation()">
@@ -178,6 +182,7 @@
                     <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r3_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(3)"></textarea>
+                <button class="secondary-btn" style="width:100%; padding:4px; font-size:0.7rem; margin-top:2px;" onclick="event.stopPropagation(); clearPauses(3)">Clear Pauses</button>
             </div>
         </div>
     </div>
@@ -235,6 +240,7 @@
 
     let isPlaying = false;
     let lastAnimTime = null;
+    let animationFrameId = null;
 
     function selectRobot(idx) {
         activeRobotIdx = idx;
@@ -264,30 +270,26 @@
 
         const r = robots[activeRobotIdx];
 
-        // Check if user clicked close to an existing segment/point to insert a delay
-        let clickedSegmentIdx = -1;
-        let closestPointIdx = -1;
-        let minDist = 15;
+        // Check if user clicked close to any path point (to add pause precisely where clicked)
+        let closestWaypointIdx = -1;
+        let minDist = 18;
 
-        r.segments.forEach((seg, sIdx) => {
-            seg.forEach((pt, pIdx) => {
-                const screenPt = fromInches(pt.x, pt.y);
-                const dist = Math.hypot(mouseX - screenPt.x, mouseY - screenPt.y);
-                if(dist < minDist) {
-                    minDist = dist;
-                    clickedSegmentIdx = sIdx;
-                    closestPointIdx = pIdx;
-                }
-            });
+        r.waypoints.forEach((wp, pIdx) => {
+            const screenPt = fromInches(wp.x, wp.y);
+            const dist = Math.hypot(mouseX - screenPt.x, mouseY - screenPt.y);
+            if(dist < minDist) {
+                minDist = dist;
+                closestWaypointIdx = pIdx;
+            }
         });
 
-        if(clickedSegmentIdx !== -1) {
-            // Prompt for delay addition at this path node
+        if(closestWaypointIdx !== -1) {
             const delaySec = prompt("Enter pause/delay duration (seconds) at this point:", "1.0");
             if(delaySec !== null && !isNaN(delaySec)) {
-                r.waypoints[clickedSegmentIdx + 1].delay = (r.waypoints[clickedSegmentIdx + 1].delay || 0) + parseFloat(delaySec);
+                r.waypoints[closestWaypointIdx].delay = (r.waypoints[closestWaypointIdx].delay || 0) + parseFloat(delaySec);
                 rebuildRobotPath(activeRobotIdx);
                 updateTextArea(activeRobotIdx);
+                renderScene();
             }
             return;
         }
@@ -315,6 +317,13 @@
         renderScene();
     });
 
+    function clearPauses(idx) {
+        robots[idx].waypoints.forEach(wp => wp.delay = 0);
+        rebuildRobotPath(idx);
+        updateTextArea(idx);
+        renderScene();
+    }
+
     function rebuildRobotPath(idx) {
         const r = robots[idx];
         r.segments = [];
@@ -322,7 +331,7 @@
         let totalDist = 0;
 
         if(r.waypoints.length > 0) {
-            flatPoints.push({ x: r.waypoints[0].x, y: r.waypoints[0].y, cumulativeDist: 0 });
+            flatPoints.push({ x: r.waypoints[0].x, y: r.waypoints[0].y, cumulativeDist: 0, delayNode: r.waypoints[0].delay || 0 });
         }
 
         for(let i=0; i<r.waypoints.length - 1; i++) {
@@ -352,7 +361,6 @@
         const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
         const speedInchesPerSec = (rpm / 60) * (Math.PI * dia);
         
-        // Account for total delay time embedded in path nodes
         let totalDelay = r.waypoints.reduce((acc, wp) => acc + (wp.delay || 0), 0);
         r.duration = speedInchesPerSec > 0 ? (totalDist / speedInchesPerSec) + totalDelay : 0;
     }
@@ -363,7 +371,7 @@
             document.getElementById(`r${idx}_input`).value = "";
             return;
         }
-        let text = `// [Start Pose Reference]: {X: ${r.waypoints[0].x}, Y: ${r.waypoints[0].y}}\n`;
+        let text = `// [Start Pose Reference]: {X: ${r.waypoints[0].x}, Y: ${r.waypoints[0].y}} | [Delay]: ${r.waypoints[0].delay || 0}s\n`;
         r.waypoints.forEach((wp, i) => {
             if(i === 0) return;
             text += `// Segment ${i} | [Waypoint]: {${wp.x}, ${wp.y}} | [Delay]: ${wp.delay || 0}s\n`;
@@ -374,12 +382,17 @@
     }
 
     function loadRobotPathFromText(idx) {
-        // Basic sync handler if pasting text directly
         const raw = document.getElementById(`r${idx}_input`).value;
         const startRef = raw.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
         if(!startRef) return;
+        const startDelayMatch = raw.match(/\[Start Pose Reference\].*?\[Delay\]: (\d+\.?\d*)s/);
 
-        let wps = [{ x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), cx1: parseFloat(startRef[1]), cy1: parseFloat(startRef[2]), cx2: parseFloat(startRef[1]), cy2: parseFloat(startRef[2]), delay: 0 }];
+        let wps = [{ 
+            x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), 
+            cx1: parseFloat(startRef[1]), cy1: parseFloat(startRef[2]), 
+            cx2: parseFloat(startRef[1]), cy2: parseFloat(startRef[2]), 
+            delay: startDelayMatch ? parseFloat(startDelayMatch[1]) : 0 
+        }];
         
         const blocks = raw.split(/\/\/ Segment \d+/).filter(b => b.includes('Waypoint'));
         blocks.forEach((block) => {
@@ -436,7 +449,6 @@
             ctx.restore();
         }
 
-        // Draw paths and waypoint markers
         robots.forEach((r, idx) => {
             if(r.waypoints.length === 0) return;
             ctx.strokeStyle = robotColors[idx];
@@ -449,7 +461,6 @@
             });
             ctx.stroke();
 
-            // Draw waypoint dots & delays
             r.waypoints.forEach((wp) => {
                 const c = fromInches(wp.x, wp.y);
                 ctx.fillStyle = robotColors[idx];
@@ -465,7 +476,6 @@
             });
         });
 
-        // Draw robots at current timeline position
         const currentTime = parseFloat(timeSlider.value);
         timeDisplay.innerText = currentTime.toFixed(2) + 's';
 
@@ -476,19 +486,6 @@
             const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
             const speed = (rpm / 60) * (Math.PI * dia);
 
-            // Calculate position mapping with intermediate node delays accounted for
-            let targetDist = 0;
-            let elapsedAccum = 0;
-            let currentDelayActive = 0;
-
-            // Simple time-to-distance engine simulation lookup
-            let simulatedDist = 0;
-            let timeTracker = 0;
-            let evaluatedPoint = r.flatPath[0];
-            let nextPoint = r.flatPath[1] || r.flatPath[0];
-
-            // Step through flatPath to evaluate delays and movement progress relative to currentTime
-            // (Linear approximation across kinematic segments)
             let currentTraveledTime = 0;
             let activeProgressIndex = 0;
 
@@ -540,39 +537,63 @@
     }
 
     function togglePlay() {
-        isPlaying = !isPlaying;
-        playBtn.innerText = isPlaying ? "Pause Simulation" : "Play Simulation";
-        if(isPlaying) {
-            lastAnimTime = performance.now();
-            requestAnimationFrame(animLoop);
+        if (isPlaying) {
+            stopSimulation();
+        } else {
+            startSimulation();
+        }
+    }
+
+    function startSimulation() {
+        if (isPlaying) return;
+        isPlaying = true;
+        playBtn.innerText = "Pause Simulation";
+        lastAnimTime = performance.now();
+        
+        // If slider is already at the max limit, loop back to 0 to restart play cleanly
+        if (parseFloat(timeSlider.value) >= parseFloat(matchDurationInput.value)) {
+            timeSlider.value = 0;
+        }
+        
+        animLoop(lastAnimTime);
+    }
+
+    function stopSimulation() {
+        isPlaying = false;
+        playBtn.innerText = "Play Simulation";
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
         }
     }
 
     function animLoop(timestamp) {
-        if(!isPlaying) return;
+        if (!isPlaying) return;
+        
         const dt = (timestamp - lastAnimTime) / 1000;
         lastAnimTime = timestamp;
 
         let curTime = parseFloat(timeSlider.value) + dt;
         const maxTime = parseFloat(matchDurationInput.value);
 
-        if(curTime >= maxTime) {
+        if (curTime >= maxTime) {
             curTime = maxTime;
-            isPlaying = false;
-            playBtn.innerText = "Play Simulation";
+            timeSlider.value = curTime;
+            renderScene();
+            stopSimulation();
+            return;
         }
 
         timeSlider.value = curTime;
         renderScene();
 
-        if(isPlaying) {
-            requestAnimationFrame(animLoop);
+        if (isPlaying) {
+            animationFrameId = requestAnimationFrame(animLoop);
         }
     }
 
     function resetSimulation() {
-        isPlaying = false;
-        playBtn.innerText = "Play Simulation";
+        stopSimulation();
         timeSlider.value = 0;
         renderScene();
     }
