@@ -677,7 +677,10 @@
                 const p1 = waypoints[i], p2 = waypoints[i+1];
                 const seg = [];
                 const res = p1.res || globalResolution;
-                const steps = Math.max(1, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / res));
+                const controlLen = Math.hypot(p1.cx1 - p1.x, p1.cy1 - p1.y)
+                + Math.hypot(p1.cx2 - p1.cx1, p1.cy2 - p1.cy1)
+                + Math.hypot(p2.x - p1.cx2, p2.y - p1.cy2);
+                const steps = Math.max(1, Math.ceil(controlLen / res));
                 for(let t=0; t<=steps; t++){
                     let s = t/steps;
                     let x = Math.pow(1-s, 3) * p1.x + 3 * Math.pow(1-s, 2) * s * p1.cx1 + 3 * (1-s) * s*s * p1.cx2 + s*s*s * p2.x;
