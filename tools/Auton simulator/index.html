@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Robot Custom Pather - YogurtLib</title>
+    <!-- Linked to your existing external style sheet -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Only tool-specific layout additions that don't duplicate variables */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .app-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 32px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 24px;
+            width: 100%;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .canvas-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+
+        canvas {
+            background: var(--bg);
+            display: block;
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+        }
+
+        .controls-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 24px;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+
+        .global-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .global-controls label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .global-controls input {
+            width: 70px;
+            padding: 8px;
+            background: var(--bg);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .btn-danger {
+            background: rgba(255, 0, 0, 0.15);
+            color: var(--end);
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+        .btn-danger:hover { background: rgba(255, 0, 0, 0.25); }
+
+        .robot-card {
+            background: var(--bg);
+            border: 1px solid var(--panel-border);
+            padding: 14px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .robot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .robot-inputs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+        }
+
+        .robot-inputs input {
+            width: 100%;
+            padding: 6px 8px;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 46px;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            border-radius: 4px;
+            resize: none;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 6px;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-line);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <header class="site-header">
+        <div class="brand">
+            <div class="brand-dot"></div>
+            YogurtLib <span class="sub">// MULTI-ROBOT PATHER</span>
+        </div>
+        <nav class="site-nav">
+            <a href="../../index.html">Home</a>
+            <a href="../custom-pather/index.html">Active</a>
+            <a href="../data-visualizer/index.html">Data Visualizer</a>
+            <a href="../../docs/index.html">Docs</a>
+        </nav>
+    </header>
+
+    <!-- App Content Container -->
+    <div class="app-wrapper">
+        <div class="main-container">
+            <!-- Field Canvas -->
+            <div class="canvas-card">
+                <canvas id="fieldCanvas" width="600" height="600"></canvas>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="controls-card">
+                <div class="eyebrow">Simulation Controls</div>
+                <div class="global-controls">
+                    <div>
+                        <label>TIMER (SEC)</label>
+                        <input type="number" id="simTime" value="15" min="1">
+                    </div>
+                    <button class="btn btn-primary" id="play-btn">Start</button>
+                    <button class="btn btn-danger" id="reset-btn">Reset</button>
+                </div>
+
+                <div style="height: 1px; background: var(--panel-border); margin: 4px 0;"></div>
+
+                <div class="eyebrow">Robot Configurations</div>
+
+                <!-- Robot 1 -->
+                <div class="robot-card" style="border-left: 4px solid var(--start);">
+                    <div class="robot-header">
+                        <span style="color: var(--start);">Robot 1</span>
+                        <span class="status-pill">Active</span>
+                    </div>
+                    <div class="robot-inputs">
+                        <div class="input-group">
+                            <label>RPM</label>
+                            <input type="number" id="rpm-0" value="300">
+                        </div>
+                        <div class="input-group">
+                            <label>WHEEL DIA (IN)</label>
+                            <input type="number" id="dia-0" value="4">
+                        </div>
+                        <div class="input-group">
+                            <label>DELAY (S)</label>
+                            <input type="number" id="delay-0" value="0" step="0.1">
+                        </div>
+                    </div>
+                    <textarea id="path-0" placeholder="Path: x,y; x,y...">0,0; 30,30; 60,30; 60,120</textarea>
+                </div>
+
+                <!-- Robot 2 -->
+                <div class="robot-card" style="border-left: 4px solid var(--cyan);">
+                    <div class="robot-header">
+                        <span style="color: var(--cyan);">Robot 2</span>
+                        <span class="status-pill">Active</span>
+                    </div>
+                    <div class="robot-inputs">
+                        <div class="input-group">
+                            <label>RPM</label>
+                            <input type="number" id="rpm-1" value="300">
+                        </div>
+                        <div class="input-group">
+                            <label>WHEEL DIA (IN)</label>
+                            <input type="number" id="dia-1" value="4">
+                        </div>
+                        <div class="input-group">
+                            <label>DELAY (S)</label>
+                            <input type="number" id="delay-1" value="1" step="0.1">
+                        </div>
+                    </div>
+                    <textarea id="path-1" placeholder="Path: x,y; x,y...">0,60; 30,90; 90,90; 120,120</textarea>
+                </div>
+
+                <!-- Robot 3 -->
+                <div class="robot-card" style="border-left: 4px solid var(--warning-gold);">
+                    <div class="robot-header">
+                        <span style="color: var(--warning-gold);">Robot 3</span>
+                        <span class="status-pill">Active</span>
+                    </div>
+                    <div class="robot-inputs">
+                        <div class="input-group">
+                            <label>RPM</label>
+                            <input type="number" id="rpm-2" value="300">
+                        </div>
+                        <div class="input-group">
+                            <label>WHEEL DIA (IN)</label>
+                            <input type="number" id="dia-2" value="4">
+                        </div>
+                        <div class="input-group">
+                            <label>DELAY (S)</label>
+                            <input type="number" id="delay-2" value="2" step="0.1">
+                        </div>
+                    </div>
+                    <textarea id="path-2" placeholder="Path: x,y; x,y...">120,0; 90,30; 90,60; 30,60</textarea>
+                </div>
+
+                <!-- Robot 4 -->
+                <div class="robot-card" style="border-left: 4px solid var(--accent);">
+                    <div class="robot-header">
+                        <span style="color: var(--accent);">Robot 4</span>
+                        <span class="status-pill">Active</span>
+                    </div>
+                    <div class="robot-inputs">
+                        <div class="input-group">
+                            <label>RPM</label>
+                            <input type="number" id="rpm-3" value="300">
+                        </div>
+                        <div class="input-group">
+                            <label>WHEEL DIA (IN)</label>
+                            <input type="number" id="dia-3" value="4">
+                        </div>
+                        <div class="input-group">
+                            <label>DELAY (S)</label>
+                            <input type="number" id="delay-3" value="3" step="0.1">
+                        </div>
+                    </div>
+                    <textarea id="path-3" placeholder="Path: x,y; x,y...">120,120; 90,90; 60,60; 0,0</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <span>yogurtlib.com</span>
+        <span>Multi-Robot Custom Pather</span>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('fieldCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const FIELD_SIZE_INCHES = 144;
+        const CANVAS_SIZE = canvas.width;
+        const SCALE = CANVAS_SIZE / FIELD_SIZE_INCHES;
+
+        const colors = ['#00ff00', '#00ffff', '#ffcc00', '#8c52ff'];
+        let robots = [];
+        let isRunning = false;
+        let animationStartTime = null;
+        let simulationDuration = 15;
+
+        function inchesToCanvas(x, y) {
+            return {
+                x: x * SCALE,
+                y: CANVAS_SIZE - (y * SCALE)
+            };
+        }
+
+        class RobotSimulation {
+            constructor(index) {
+                this.index = index;
+                this.color = colors[index];
+                this.path = [];
+                this.segmentDistances = [];
+                this.totalDistance = 0;
+                this.speed = 0;
+                this.delay = 0;
+                this.currentPos = { x: 0, y: 0 };
+            }
+
+            init() {
+                const rpm = parseFloat(document.getElementById(`rpm-${this.index}`).value) || 300;
+                const dia = parseFloat(document.getElementById(`dia-${this.index}`).value) || 4;
+                this.delay = parseFloat(document.getElementById(`delay-${this.index}`).value) || 0;
+                
+                this.speed = (rpm / 60) * (Math.PI * dia);
+
+                const rawText = document.getElementById(`path-${this.index}`).value;
+                this.path = [];
+                const points = rawText.split(/[\n;]+/);
+                
+                points.forEach(pt => {
+                    const parts = pt.split(',');
+                    if (parts.length >= 2) {
+                        const x = parseFloat(parts[0]);
+                        const y = parseFloat(parts[1]);
+                        if (!isNaN(x) && !isNaN(y)) {
+                            this.path.push({ x, y });
+                        }
+                    }
+                });
+
+                this.segmentDistances = [];
+                this.totalDistance = 0;
+                for (let i = 0; i < this.path.length - 1; i++) {
+                    const p1 = this.path[i];
+                    const p2 = this.path[i + 1];
+                    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                    this.segmentDistances.push(dist);
+                    this.totalDistance += dist;
+                }
+
+                this.travelTime = this.speed > 0 ? this.totalDistance / this.speed : 0;
+                
+                if (this.path.length > 0) {
+                    this.currentPos = { ...this.path[0] };
+                }
+            }
+
+            update(elapsedSeconds) {
+                if (this.path.length === 0) return;
+
+                if (elapsedSeconds < this.delay) {
+                    this.currentPos = { ...this.path[0] };
+                    return;
+                }
+
+                const activeElapsed = elapsedSeconds - this.delay;
+                const distanceTraveled = activeElapsed * this.speed;
+
+                if (distanceTraveled >= this.totalDistance || activeElapsed >= simulationDuration) {
+                    this.currentPos = { ...this.path[this.path.length - 1] };
+                    return;
+                }
+
+                let accumulatedDist = 0;
+                for (let i = 0; i < this.segmentDistances.length; i++) {
+                    const segDist = this.segmentDistances[i];
+                    if (accumulatedDist + segDist >= distanceTraveled) {
+                        const localDist = distanceTraveled - accumulatedDist;
+                        const ratio = segDist === 0 ? 0 : localDist / segDist;
+                        const p1 = this.path[i];
+                        const p2 = this.path[i + 1];
+
+                        this.currentPos = {
+                            x: p1.x + (p2.x - p1.x) * ratio,
+                            y: p1.y + (p2.y - p1.y) * ratio
+                        };
+                        return;
+                    }
+                    accumulatedDist += segDist;
+                }
+            }
+
+            draw() {
+                if (this.path.length === 0) return;
+
+                ctx.beginPath();
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                for (let i = 0; i < this.path.length; i++) {
+                    const pt = inchesToCanvas(this.path[i].x, this.path[i].y);
+                    if (i === 0) ctx.moveTo(pt.x, pt.y);
+                    else ctx.lineTo(pt.x, pt.y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const pos = inchesToCanvas(this.currentPos.x, this.currentPos.y);
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 7, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+            }
+        }
+
+        function initSimulation() {
+            simulationDuration = parseFloat(document.getElementById('simTime').value) || 15;
+            robots = [];
+            for (let i = 0; i < 4; i++) {
+                let r = new RobotSimulation(i);
+                r.init();
+                robots.push(r);
+            }
+            drawField();
+        }
+
+        function drawField() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            ctx.strokeStyle = '#1f1f26';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= FIELD_SIZE_INCHES; i += 24) {
+                let p1 = inchesToCanvas(i, 0);
+                let p2 = inchesToCanvas(i, FIELD_SIZE_INCHES);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+
+                let h1 = inchesToCanvas(0, i);
+                let h2 = inchesToCanvas(FIELD_SIZE_INCHES, i);
+                ctx.beginPath(); ctx.moveTo(h1.x, h1.y); ctx.lineTo(h2.x, h2.y); ctx.stroke();
+            }
+
+            robots.forEach(robot => robot.draw());
+        }
+
+        function loop(timestamp) {
+            if (!animationStartTime) animationStartTime = timestamp;
+            const elapsedSeconds = (timestamp - animationStartTime) / 1000;
+
+            if (elapsedSeconds >= simulationDuration) {
+                isRunning = false;
+                document.getElementById('play-btn').innerText = 'Start';
+                robots.forEach(robot => robot.update(simulationDuration));
+                drawField();
+                return;
+            }
+
+            robots.forEach(robot => robot.update(elapsedSeconds));
+            drawField();
+
+            if (isRunning) {
+                requestAnimationFrame(loop);
+            }
+        }
+
+        document.getElementById('play-btn').addEventListener('click', () => {
+            if (!isRunning) {
+                initSimulation();
+                isRunning = true;
+                animationStartTime = null;
+                document.getElementById('play-btn').innerText = 'Pause';
+                requestAnimationFrame(loop);
+            } else {
+                isRunning = false;
+                document.getElementById('play-btn').innerText = 'Resume';
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            isRunning = false;
+            document.getElementById('play-btn').innerText = 'Start';
+            initSimulation();
+        });
+
+        window.onload = () => {
+            initSimulation();
+        };
+    </script>
+</body>
+</html>
