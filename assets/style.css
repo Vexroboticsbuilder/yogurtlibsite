@@ -24,8 +24,8 @@
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
   /* Robot varaibles, change dependanton the 210E robot, other teams/users can configure manually*/
-  --robot-width: 18in;
-  --robot-length: 18in:
+  --robot-width: 18;
+  --robot-length: 18:
 }
 
 * { box-sizing: border-box; }
