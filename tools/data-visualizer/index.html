@@ -9,9 +9,9 @@
     <style>
         /* :root {
             --accent: #8c52ff;
-            --bg-dark: #000000;
-            --panel-bg: #111111;
-            --border: #333;
+            --bg: #000000;
+            --panel: #111111;
+            --panel-border: #333;
             --text: #ffffff;
             --field-size: 550px;
             --warning-gold: #ffcc00;
@@ -19,7 +19,7 @@
 
         body { 
             font-family: 'Open Sans', sans-serif; 
-            background: var(--bg-dark); 
+            background: var(--bg); 
             color: var(--text); 
             margin: 0; 
             padding: 0;
@@ -82,7 +82,7 @@
         }
 
         .glass-panel {
-            background: var(--panel-bg); border: 1px solid var(--border);
+            background: var(--panel); border: 1px solid var(--panel-border);
             border-radius: 12px; padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -96,7 +96,7 @@
 
         .field-btns { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-field { 
-            flex: 1; background: #222; border: 1px solid var(--border); 
+            flex: 1; background: #222; border: 1px solid var(--panel-border); 
             color: #888; padding: 12px; cursor: pointer; font-weight: 700; 
             border-radius: 6px; text-transform: uppercase; font-size: 0.8rem;
         }

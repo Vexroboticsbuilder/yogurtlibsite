@@ -11,8 +11,9 @@
   --text: #ffffff;
   --muted: #8c8c96;
   --faint: #55555f;
+  --field-size: 550px; /*JUST DEBUGGER USES */
   
-  /* UI Theming & Extra Colors */
+  /* UI Theming & Extra Colors for specific tools */
   --accent-on: #8c52ff;
   --accent-off: #2c1952;
   --start: #00ff00;
