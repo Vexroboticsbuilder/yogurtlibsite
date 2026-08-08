@@ -36,6 +36,12 @@
             gap: 20px;
         }
 
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
         #canvas-container { 
             position: relative; border: 1px solid #444; border-radius: 4px; 
             box-shadow: 0 0 30px rgba(140, 82, 255, 0.2); background: #000; line-height: 0; 
@@ -43,12 +49,44 @@
 
         canvas { cursor: crosshair; display: block; z-index: 2; position: relative; }
 
+        /* Collision Warning Panel */
+        .collision-panel {
+            background: #181818;
+            border: 1px solid #333;
+            border-left: 4px solid #444;
+            padding: 10px 15px;
+            border-radius: 6px;
+            width: 622px;
+            box-sizing: border-box;
+            font-size: 0.8rem;
+        }
+        .collision-panel.has-collision {
+            border-left-color: #FF3949;
+            background: #2a1618;
+        }
+        .collision-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collision-list {
+            max-height: 70px;
+            overflow-y: auto;
+            margin: 0;
+            padding-left: 15px;
+            font-family: 'Courier New', monospace;
+            color: #ffcccc;
+            font-size: 0.75rem;
+        }
+
         .sidebar-controls {
             display: flex;
             flex-direction: column;
             gap: 12px;
             width: 360px;
-            max-height: 622px;
+            max-height: 670px;
             overflow-y: auto;
             background: var(--panel);
             padding: 15px;
@@ -124,23 +162,36 @@
 
 <div class="tool-body">
     <div class="main-layout">
-        <div id="canvas-container">
-            <canvas id="field" width="622" height="622"></canvas>
+        <div class="left-column">
+            <div id="canvas-container">
+                <canvas id="field" width="622" height="622"></canvas>
+            </div>
+            
+            <!-- Collision Warning Panel -->
+            <div id="collisionPanel" class="collision-panel">
+                <div class="collision-title">
+                    <span id="collisionHeading">COLLISION MONITOR: SAFE</span>
+                    <span id="collisionCountBadge" style="font-size:0.7rem; color:#888;">0 conflicts found</span>
+                </div>
+                <ul id="collisionList" class="collision-list">
+                    <li>No robot overlaps detected along current trajectories.</li>
+                </ul>
+            </div>
         </div>
         
         <div class="sidebar-controls">
             <h3 style="margin:0 0 5px 0; font-size:0.9rem; color:#fff;">Robot Configurations</h3>
-            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Shift+Click Node: Edit Delay | Double-Click Node: Straighten</span>
+            <span style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Shift+Click Node: Edit Delay</span>
             
             <!-- Robot Cards -->
             <div id="card_0" class="robot-config-card selected" style="--robot-color: #8c52ff; --card-bg: #221c2d; --robot-glow: rgba(140,82,255,0.3);" onclick="selectRobot(0)">
                 <b>Robot 1 (Purple)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r0_rpm" value="360" step="10" onclick="event.stopPropagation()">
-                    <span>Dia (in):</span><input type="number" id="r0_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
+                    <span>RPM:</span><input type="number" id="r0_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                    <span>Dia (in):</span><input type="number" id="r0_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
-                    <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
+                    <span>Width/Len:</span><input type="number" id="r0_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r0_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r0_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(0)"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
@@ -152,11 +203,11 @@
             <div id="card_1" class="robot-config-card" style="--robot-color: #49B6FF; --card-bg: #192633; --robot-glow: rgba(73,182,255,0.3);" onclick="selectRobot(1)">
                 <b>Robot 2 (Blue)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10" onclick="event.stopPropagation()">
-                    <span>Dia (in):</span><input type="number" id="r1_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
+                    <span>RPM:</span><input type="number" id="r1_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                    <span>Dia (in):</span><input type="number" id="r1_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
-                    <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
+                    <span>Width/Len:</span><input type="number" id="r1_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r1_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r1_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(1)"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
@@ -168,11 +219,11 @@
             <div id="card_2" class="robot-config-card" style="--robot-color: #2CC259; --card-bg: #182c1f; --robot-glow: rgba(44,194,89,0.3);" onclick="selectRobot(2)">
                 <b>Robot 3 (Green)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10" onclick="event.stopPropagation()">
-                    <span>Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
+                    <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                    <span>Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
-                    <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
+                    <span>Width/Len:</span><input type="number" id="r2_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r2_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r2_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(2)"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
@@ -184,11 +235,11 @@
             <div id="card_3" class="robot-config-card" style="--robot-color: #FF3949; --card-bg: #331c1f; --robot-glow: rgba(255,57,73,0.3);" onclick="selectRobot(3)">
                 <b>Robot 4 (Red)</b>
                 <div class="config-row" style="margin-top:5px;">
-                    <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10" onclick="event.stopPropagation()">
-                    <span>Dia (in):</span><input type="number" id="r3_dia" value="3.25" step="0.25" onclick="event.stopPropagation()">
+                    <span>RPM:</span><input type="number" id="r3_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
+                    <span>Dia (in):</span><input type="number" id="r3_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                 </div>
                 <div class="config-row">
-                    <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene()" onclick="event.stopPropagation()">
+                    <span>Width/Len:</span><input type="number" id="r3_w" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">/<input type="number" id="r3_l" value="15" style="width:40px" oninput="renderScene(); runCollisionCheck()" onclick="event.stopPropagation()">
                 </div>
                 <textarea class="input-box" id="r3_input" placeholder="// Paste path format..." onclick="event.stopPropagation()" oninput="loadRobotPathFromText(3)"></textarea>
                 <div style="display:flex; gap:4px; margin-top:2px;">
@@ -228,6 +279,7 @@
     const matchDurationInput = document.getElementById('matchDuration');
     const playBtn = document.getElementById('playBtn');
 
+    const robotNames = ['Robot 1 (Purple)', 'Robot 2 (Blue)', 'Robot 3 (Green)', 'Robot 4 (Red)'];
     const robotColors = ['#8c52ff', '#49B6FF', '#2CC259', '#FF3949'];
     const totalFieldInches = 141.0;
     const canvasSize = 600;
@@ -272,6 +324,7 @@
             timeSlider.value = matchDurationInput.value;
         }
         renderScene();
+        runCollisionCheck();
     });
 
     timeSlider.addEventListener('input', () => {
@@ -294,7 +347,6 @@
             if (Math.hypot(mouseX - ptScreen.x, mouseY - ptScreen.y) < hitRadius) {
                 const now = Date.now();
                 if (now - lastClickTime < 300 && lastClickedWpIdx === i) {
-                    // Double-Click: Straighten Handles between neighbors
                     straightenWaypoint(activeRobotIdx, i);
                     lastClickTime = 0;
                     lastClickedWpIdx = -1;
@@ -310,6 +362,7 @@
                         rebuildRobotPath(activeRobotIdx);
                         updateTextArea(activeRobotIdx);
                         renderScene();
+                        runCollisionCheck();
                     }
                     return;
                 }
@@ -331,7 +384,6 @@
             }
         }
 
-        // Add New Waypoint
         if (r.waypoints.length === 0) {
             r.waypoints.push({
                 x: clickedInches.x, y: clickedInches.y,
@@ -341,7 +393,6 @@
             });
         } else {
             const last = r.waypoints[r.waypoints.length - 1];
-            // Industry standard pather handle distribution (1/3 length offsets)
             last.cx1 = parseFloat((last.x + (clickedInches.x - last.x) * 0.33).toFixed(2));
             last.cy1 = parseFloat((last.y + (clickedInches.y - last.y) * 0.33).toFixed(2));
             last.cx2 = parseFloat((last.x + (clickedInches.x - last.x) * 0.66).toFixed(2));
@@ -358,6 +409,7 @@
         rebuildRobotPath(activeRobotIdx);
         updateTextArea(activeRobotIdx);
         renderScene();
+        runCollisionCheck();
     });
 
     canvas.addEventListener('mousemove', (e) => {
@@ -375,7 +427,6 @@
             wp.cx1 += dx; wp.cy1 += dy;
             wp.cx2 += dx; wp.cy2 += dy;
 
-            // Also shift previous segment's exit handle if applicable
             if (dragTarget.wpIdx > 0) {
                 const prevWp = r.waypoints[dragTarget.wpIdx - 1];
                 prevWp.cx2 += dx; prevWp.cy2 += dy;
@@ -391,6 +442,7 @@
         rebuildRobotPath(activeRobotIdx);
         updateTextArea(activeRobotIdx);
         renderScene();
+        runCollisionCheck();
     });
 
     window.addEventListener('mouseup', () => {
@@ -400,9 +452,6 @@
     function straightenWaypoint(idx, wpIdx) {
         const r = robots[idx];
         const wp = r.waypoints[wpIdx];
-        let prevPt = wpIdx > 0 ? r.waypoints[wpIdx - 1] : wp;
-        let nextPt = wpIdx < r.waypoints.length - 1 ? r.waypoints[wpIdx + 1] : wp;
-
         if (wpIdx > 0) {
             const pPrev = r.waypoints[wpIdx - 1];
             pPrev.cx2 = parseFloat((pPrev.x + (wp.x - pPrev.x) * 0.66).toFixed(2));
@@ -418,6 +467,7 @@
         rebuildRobotPath(idx);
         updateTextArea(idx);
         renderScene();
+        runCollisionCheck();
     }
 
     function clearPauses(idx) {
@@ -425,6 +475,7 @@
         rebuildRobotPath(idx);
         updateTextArea(idx);
         renderScene();
+        runCollisionCheck();
     }
 
     function clearRobotPath(idx) {
@@ -432,6 +483,7 @@
         robots[idx].flatPath = [];
         updateTextArea(idx);
         renderScene();
+        runCollisionCheck();
     }
 
     function clearAllPaths() {
@@ -486,16 +538,119 @@
         const startRef = raw.match(/\[Start Pose\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
         if (!startRef) return;
 
-        let wps = [{ 
+        robots[idx].waypoints = [{ 
             x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), 
             cx1: parseFloat(startRef[1]), cy1: parseFloat(startRef[2]), 
             cx2: parseFloat(startRef[1]), cy2: parseFloat(startRef[2]), 
             delay: 0 
         }];
-
-        robots[idx].waypoints = wps;
         rebuildRobotPath(idx);
         renderScene();
+        runCollisionCheck();
+    }
+
+    function getRobotStateAtTime(idx, targetTime) {
+        const r = robots[idx];
+        if (!r.flatPath || r.flatPath.length === 0) return null;
+
+        const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
+        const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
+        const speed = (rpm / 60) * (Math.PI * dia);
+
+        let currentTraveledTime = 0;
+        let activeIdx = 0;
+
+        for (let i = 0; i < r.flatPath.length; i++) {
+            const pt = r.flatPath[i];
+            const prev = i > 0 ? r.flatPath[i-1] : pt;
+            const dSeg = Math.hypot(pt.x - prev.x, pt.y - prev.y);
+            const tSeg = speed > 0 ? dSeg / speed : 0;
+            
+            currentTraveledTime += tSeg;
+            if (pt.delayNode) currentTraveledTime += pt.delayNode;
+
+            if (currentTraveledTime >= targetTime) {
+                activeIdx = i;
+                break;
+            }
+            activeIdx = i;
+        }
+
+        const evaluatedPoint = r.flatPath[activeIdx];
+        const pAhead = r.flatPath[Math.min(activeIdx + 3, r.flatPath.length - 1)];
+        const angle = Math.atan2(pAhead.y - evaluatedPoint.y, pAhead.x - evaluatedPoint.x);
+
+        const w = parseFloat(document.getElementById(`r${idx}_w`).value) || 15;
+        const l = parseFloat(document.getElementById(`r${idx}_l`).value) || 15;
+
+        return { x: evaluatedPoint.x, y: evaluatedPoint.y, angle, w, l };
+    }
+
+    // Simple Oriented Bounding Box collision check approximation (circle-to-circle bounding or separating axis)
+    function checkBoxesOverlap(b1, b2) {
+        // Approximate collision check using bounding radii plus box dimensions clearance check
+        const dist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
+        const maxRadius1 = Math.hypot(b1.w, b1.l) / 2;
+        const maxRadius2 = Math.hypot(b2.w, b2.l) / 2;
+        if (dist > (maxRadius1 + maxRadius2)) return false;
+
+        // More granular axis check can be done, but bounding envelope is robust for fast pass checks
+        return dist < (Math.max(b1.w, b1.l)/2 + Math.max(b2.w, b2.l)/2);
+    }
+
+    function runCollisionCheck() {
+        const panel = document.getElementById('collisionPanel');
+        const heading = document.getElementById('collisionHeading');
+        const badge = document.getElementById('collisionCountBadge');
+        const list = document.getElementById('collisionList');
+
+        list.innerHTML = "";
+        let collisions = [];
+        const maxTime = parseFloat(matchDurationInput.value);
+        const step = 0.1; // Check every 100ms
+
+        for (let t = 0; t <= maxTime; t += step) {
+            let activeStates = [];
+            for (let i = 0; i < robots.length; i++) {
+                if (robots[i].flatPath.length > 0) {
+                    activeStates.push({ idx: i, state: getRobotStateAtTime(i, t) });
+                }
+            }
+
+            for (let i = 0; i < activeStates.length; i++) {
+                for (let j = i + 1; j < activeStates.length; j++) {
+                    const r1 = activeStates[i];
+                    const r2 = activeStates[j];
+                    if (r1.state && r2.state) {
+                        if (checkBoxesOverlap(r1.state, r2.state)) {
+                            // Avoid flooding identical collision timestamp blocks (group within 0.3s window)
+                            const lastColl = collisions[collisions.length - 1];
+                            if (!lastColl || lastColl.r1 !== r1.idx || lastColl.r2 !== r2.idx || (t - lastColl.time > 0.4)) {
+                                collisions.push({ time: t.toFixed(2), r1: r1.idx, r2: r2.idx });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (collisions.length > 0) {
+            panel.classList.add('has-collision');
+            heading.innerText = "COLLISION MONITOR: WARNING";
+            badge.innerText = `${collisions.length} conflict(s) found`;
+            collisions.forEach(c => {
+                const li = document.createElement('li');
+                li.innerHTML = `[${c.time}s] <span style="color:${robotColors[c.r1]}">${robotNames[c.r1]}</span> & <span style="color:${robotColors[c.r2]}">${robotNames[c.r2]}</span>`;
+                list.appendChild(li);
+            });
+        } else {
+            panel.classList.remove('has-collision');
+            heading.innerText = "COLLISION MONITOR: SAFE";
+            badge.innerText = "0 conflicts found";
+            const li = document.createElement('li');
+            li.innerText = "No robot overlaps detected along current trajectories.";
+            list.appendChild(li);
+        }
     }
 
     function fromInches(ix, iy) { 
@@ -587,45 +742,16 @@
 
         robots.forEach((r, idx) => {
             if (!r.flatPath || r.flatPath.length === 0) return;
+            const state = getRobotStateAtTime(idx, currentTime);
+            if (!state) return;
 
-            const rpm = parseFloat(document.getElementById(`r${idx}_rpm`).value) || 360;
-            const dia = parseFloat(document.getElementById(`r${idx}_dia`).value) || 3.25;
-            const speed = (rpm / 60) * (Math.PI * dia);
-
-            let currentTraveledTime = 0;
-            let activeProgressIndex = 0;
-
-            for (let i = 0; i < r.flatPath.length; i++) {
-                const pt = r.flatPath[i];
-                const prev = i > 0 ? r.flatPath[i-1] : pt;
-                const dSeg = Math.hypot(pt.x - prev.x, pt.y - prev.y);
-                const tSeg = speed > 0 ? dSeg / speed : 0;
-                
-                currentTraveledTime += tSeg;
-                if (pt.delayNode) {
-                    currentTraveledTime += pt.delayNode;
-                }
-
-                if (currentTraveledTime >= currentTime) {
-                    activeProgressIndex = i;
-                    break;
-                }
-                activeProgressIndex = i;
-            }
-
-            const evaluatedPoint = r.flatPath[activeProgressIndex];
-            const pAhead = r.flatPath[Math.min(activeProgressIndex + 3, r.flatPath.length - 1)];
-            
-            const p1 = fromInches(evaluatedPoint.x, evaluatedPoint.y);
-            const pAheadScreen = fromInches(pAhead.x, pAhead.y);
-            const angle = Math.atan2(pAheadScreen.y - p1.y, pAheadScreen.x - p1.x);
-
-            const w = (parseFloat(document.getElementById(`r${idx}_w`).value) || 15) * pixelsPerInch;
-            const l = (parseFloat(document.getElementById(`r${idx}_l`).value) || 15) * pixelsPerInch;
+            const p1 = fromInches(state.x, state.y);
+            const w = state.w * pixelsPerInch;
+            const l = state.l * pixelsPerInch;
 
             ctx.save();
             ctx.translate(p1.x, p1.y);
-            ctx.rotate(angle);
+            ctx.rotate(state.angle);
             ctx.strokeStyle = robotColors[idx];
             ctx.lineWidth = 2;
             ctx.strokeRect(-l/2, -w/2, l, w);
