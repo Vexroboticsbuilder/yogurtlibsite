@@ -198,8 +198,8 @@
                 </div>
             </div>
 
-            <div id="card_2" class="robot-config-card" style="--robot-color: #2CC259; --card-bg: #182c1f; --robot-glow: rgba(44,194,89,0.3);" onclick="selectRobot(2)">
-                <b>Robot 3 (Green)</b>
+            <div id="card_2" class="robot-config-card" style="--robot-color: #c2862c; --card-bg: #2c2418; --robot-glow: rgba(194, 107, 44, 0.3);" onclick="selectRobot(2)">
+                <b>Robot 3 (Orange)</b>
                 <div class="config-row" style="margin-top:5px;">
                     <span>RPM:</span><input type="number" id="r2_rpm" value="360" step="10" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
                     <span>Dia (in):</span><input type="number" id="r2_dia" value="3.25" step="0.25" onclick="event.stopPropagation()" oninput="runCollisionCheck()">
@@ -264,8 +264,8 @@
     const matchDurationInput = document.getElementById('matchDuration');
     const playBtn = document.getElementById('playBtn');
 
-    const robotNames = ['Robot 1 (Purple)', 'Robot 2 (Blue)', 'Robot 3 (Green)', 'Robot 4 (Red)'];
-    const robotColors = ['#8c52ff', '#49B6FF', '#2CC259', '#FF3949'];
+    const robotNames = ['Robot 1 (Purple)', 'Robot 2 (Blue)', 'Robot 3 (Orange)', 'Robot 4 (Red)'];
+    const robotColors = ['#8c52ff', '#49B6FF', '#c2862c', '#FF3949'];
     const totalFieldInches = 141.0;
     const canvasSize = 600;
     const fieldOffset = 11;
