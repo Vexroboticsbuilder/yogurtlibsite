@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YL Docs - Auton Sim</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  article { max-width: 720px; margin: 0 auto; padding: 60px 32px 80px; }
+  /* .back-link { display: inline-block; margin-bottom: 0px; color: var(--accent); font-family: var(--font-mono); font-size: 1.5rem; }
+  .back-link:hover { color: var(--accent-soft); } */
+  article h1 { font-family: var(--font-display); font-size: 1.9rem; margin: 12px 0 6px; }
+  article h2 { font-family: var(--font-display); font-size: 1.15rem; margin: 40px 0 12px; border-top: 1px solid var(--panel-border); padding-top: 28px; }
+  article p, article li { color: #cfcfd6; line-height: 1.7; font-size: 0.92rem; }
+  article ul { padding-left: 20px; }
+  article code {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent);
+  }
+  kbd {
+    background: #1a1a1e; border: 1px solid #333; border-radius: 4px;
+    padding: 1px 6px; font-family: var(--font-mono); font-size: 0.8em;
+  }
+  
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><img src="../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// DOCS // Auton Simulator</span></div>
+  <nav class="site-nav">
+    <a href="../index.html">Home</a>
+    <a href="../tools/custom-pather/index.html">Custom Pather</a>
+    <a href="../tools/data-visualizer/index.html">Data Visualizer</a>
+    <a href="../tools/auton-sim/index.html">Autonomus Simulator</a>
+    <a href="index.html" class="active">Docs</a>
+  </nav>
+</header>
+
+<article>
+  <div class="nav-link-group">
+    <a class="back-link" href="index.html">&lt;- Home</a>
+    <div class="nav-link-group--right">
+      <a class="forward-link" href="index.html">Next -&gt;</a><br>
+      <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+    </div><br>
+    <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+  </div>
+  <h1>Getting started</h1>
+  <p>The autonomus simulator, or auton sim as it will be called throughout this documentation was designed for one main purpose, but can be used for many. That main purpose was easier sharing of multiple robot autonomus paths, such as an AWP path.</p>
+
+  <h2>Robot options</h2>
+  <ul>
+    <li>The simualtor has 4 robots built in and has multiple different and key options</li>
+    <li><code>RPM</code> Set the RPM to the RPM of the driven wheels of each robot</li>
+    <li><code>Wheel Diameter</code> Set this to the drivetrain wheel diameter, this is used in conjunction with RPM to determine robot speed</li>
+    <li><code>Acceleration</code> Input the robots acceleration in inches/second squared, we are still working on developing a consistant way to get accurate acceleration values</li>
+    <li><code>Width/Length</code> Use this input to set robots known length and width in inches</li>
+    <li><code>Paste path</code> / <code>Load path</code> Use theese inputs to paste in paths from the pather</li>
+    <li><kbd>Shift</kbd> + <kbd>Click on a waypoint</kbd> Use this to add pauses into the auton (Use for scoring time, intaking time, etc)</li>
+    <li><code>Clear pauses</code> Use this to clear all pauses added to a robot and get just route time</li>
+    <li><code>Clear path</code> Use this button to remove the path of the current robot selected</li>
+    <li><code>Robot Widgets</code> Click on a robot widget to activate path drawing or editing for that robot, inactive robot paths cannot be edited</li>
+    <li>Press anywhere on the field while a robot is selected to place a waypoint, similiar controlls to the pather</li>
+  </ul>
+
+  <h2>General simulator options</h2>
+  <ul>
+    <li>The simulator has collison between the robots, but <b>will not</b> stop the simulator from running</li>
+    <li><code>Auton time</code> Use this input to set the length of the autonomus period that will be simulated and stop all robots once it is competed, it is in seconds</li>
+    <li><code>Slider</code> Use the slider to manually adjust how far into the simulation you are</li>
+    <li><code>Play simulation</code> / <code>Pause simulation</code> Uses the paths and the auton time to simulate robot movement based off speed, robots will stop at delays and accelerate out of them. <b>ALL ROBOTS WILL STOP ONCE TIME RUNS OUT</b></li>
+    <li><code>Reset</code> Resets the simulation back to 0</li>
+    <li><code>Snapshot</code> Identical to the pather simulator, it will download a screenshot of robots in their current state</li>
+    <li><code>Clear all paths</code> Clears the path on all robots, and resets to zero</li>
+  </ul>
+
+  <h2>Other Notes</h2>
+  <p>This tool is the newest in the kit currently, and is still being worked on and updated, dont fully trust its values or times yet</p>
+  
+  <div class="nav-link-group">
+    <a class="back-link" href="data-visuals.html">&lt;- Back</a>
+    <div class="nav-link-group--right">
+      <a class="forward-link" href="index.html">Next -&gt;</a><br>
+      <span class="eyebrow" style="color: var(--text);">Docs Home</span>
+    </div><br>
+    <span class="eyebrow" style="color: var(--text);">Data Visuals</span>
+  </div>
+</article>
+
+<footer class="site-footer">
+  <span>210E — yogurtlib.com</span>
+  <span>Docs / Pather</span>
+</footer>
+
+</body>
+</html>
