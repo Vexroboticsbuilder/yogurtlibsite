@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auton Simulator // YogurtLib</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/style.css">
+    
+    <style>
+        .tool-body { 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; width: 100%; max-width: 1400px; margin: 0 auto; 
+        }
+
+        .main-layout {
+            display: flex; align-items: flex-start; gap: 30px; width: 100%;
+        }
+
+        #canvas-container { 
+            position: relative; border: 1px solid var(--panel-border); border-radius: 8px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); background: #000; line-height: 0; 
+            flex-shrink: 0; overflow: hidden;
+        }
+        canvas { display: block; z-index: 2; position: relative; }
+
+        .controls { 
+            background: var(--panel); padding: 25px; border-radius: 12px; 
+            border: 1px solid var(--panel-border); width: 100%; display: flex; gap: 20px;
+        }
+
+        .settings-panel, .timeline-panel { flex: 1; display: flex; flex-direction: column; gap: 12px;}
+        
+        .input-box { 
+            width: 100%; background: var(--bg); border: 1px solid var(--panel-border); color: var(--text); 
+            padding: 10px; border-radius: 6px; font-family: var(--font-mono); box-sizing: border-box; 
+            font-size: 0.85rem;
+        }
+        .input-box:focus { outline: 1px solid var(--accent); }
+
+        .form-row { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--panel-border);}
+        .form-row label { font-size: 0.80rem; color: var(--muted); font-weight: 600;}
+        .form-row input { width: 80px; background: #000; border: 1px solid var(--panel-border); color: #fff; padding: 5px; border-radius: 4px; text-align: right;}
+
+        .timeline-card {
+            background: var(--bg); border: 1px solid var(--panel-border); padding: 12px; 
+            border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .timeline-card .title { font-weight: 600; color: var(--text); }
+        .timeline-card .details { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
+        .timeline-card .time { font-family: var(--font-mono); color: var(--accent); font-weight: 600; }
+        
+        .timeline-card-history:hover {
+            border-color: var(--accent) !important;
+            background: var(--accent-soft) !important;
+        }
+
+        .add-delay-btn {
+            background: transparent; border: 1px dashed var(--faint); color: var(--muted);
+            padding: 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;
+            transition: 0.2s; text-align: center; margin: -5px 0;
+        }
+        .add-delay-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+        .total-time-box {
+            background: var(--accent-soft); border: 1px solid var(--accent-line);
+            padding: 15px; border-radius: 8px; text-align: center;
+            font-family: var(--font-mono); font-size: 1.5rem; color: var(--accent);
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="brand"><img src="../../assets/logo.svg" alt="YogurtLib" style="height:28px;">YogurtLib<span class="sub">// AUTON-SIM</span></div>
+    <nav class="site-nav">
+        <a href="../../index.html">Home</a>
+        <a href="../custom-pather/index.html">Custom Pather</a>
+        <a href="../data-visualizer/index.html">Data Visualizer</a>
+        <a href="../auton-sim/index.html" class="active">Autonomous Simulator</a>
+        <a href="../../docs/index.html">Docs</a>
+    </nav>
+</header>
+
+<div class="tool-body">
+    <div class="main-layout">
+        
+        <!-- CANVAS CONTAINER -->
+        <div id="canvas-container">
+            <canvas id="field" width="622" height="622"></canvas>
+        </div>
+
+        <!-- CONTROLS CONTAINER -->
+        <div class="controls">
+            
+            <!-- LEFT: Import & Robot Kinematics -->
+            <div class="settings-panel">
+                <span class="eyebrow">1. Import Path</span>
+                <div style="display:flex; gap:8px;">
+                    <textarea class="input-box" id="importArea" placeholder="Paste YogurtLib path code here..." style="height:60px; resize: none;"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="smartImport()" style="justify-content: center;">Parse Path & Render</button>
+
+                <span class="eyebrow" style="margin-top:5px;">Recent Paths (Past 3)</span>
+                <div id="historyContainer" style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="color: var(--faint); font-size: 0.75rem; text-align: center;">No recent paths saved.</div>
+                </div>
+
+                <span class="eyebrow" style="margin-top:5px;">2. Kinematic Limits (Imperial)</span>
+                <div class="form-row">
+                    <label>Weight (lbs)</label>
+                    <input type="number" id="robotWeight" value="13.0" step="0.5" onchange="recalculate()">
+                </div>
+                <div class="form-row">
+                    <label>Drivetrain RPM</label>
+                    <input type="number" id="robotRpm" value="450" onchange="recalculate()">
+                </div>
+                <div class="form-row">
+                    <label>Wheel Diameter (in)</label>
+                    <input type="number" id="wheelSize" value="3.25" step="0.25" onchange="recalculate()">
+                </div>
+                <div class="form-row">
+                    <label>11W Motors</label>
+                    <input type="number" id="motor11w" value="4" onchange="recalculate()">
+                </div>
+                <div class="form-row">
+                    <label>5.5W Motors</label>
+                    <input type="number" id="motor5w" value="0" onchange="recalculate()">
+                </div>
+                <div class="form-row" title="Mechanical & electrical drivetrain efficiency factor.">
+                    <label>Efficiency (%)</label>
+                    <input type="number" id="dtEfficiency" value="85" step="1" min="10" max="100" onchange="recalculate()">
+                </div>
+                <div class="form-row" title="Caps theoretical linear acceleration (traction limit).">
+                    <label>Max Accel (Slew) in/s²</label>
+                    <input type="number" id="slewCap" value="250" step="5" onchange="recalculate()">
+                </div>
+                <div class="form-row">
+                    <label>Max Turn Spd (deg/s)</label>
+                    <input type="number" id="turnSpeed" value="300" step="10" onchange="recalculate()">
+                </div>
+            </div>
+
+            <!-- RIGHT: Timeline & Delays -->
+            <div class="timeline-panel">
+                <span class="eyebrow">3. Execution Timeline</span>
+                <div class="total-time-box" id="totalTimeDisplay">
+                    Est: 0.00 s
+                </div>
+
+                <div id="timelineContainer" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 480px; padding-right: 5px;">
+                    <div style="color: var(--faint); font-size: 0.85rem; text-align: center; margin-top: 20px;">
+                        Import a path to generate timeline.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<footer class="site-footer">
+  <span>yogurtlib.com</span>
+  <span>Autonomous Simulator</span>
+</footer>
+
+<script>
+    const canvas = document.getElementById('field');
+    const ctx = canvas.getContext('2d');
+    
+    const imgSkills = new Image();
+    const imgMatch = new Image();
+    const imgWalls = new Image();
+    let isSkills = false;
+
+    const totalFieldInches = 141.0;
+    const canvasSize = 600;
+    const fieldOffset = 11; 
+    const pixelsPerInch = canvasSize / totalFieldInches;
+
+    // Load saved settings & history on startup
+    window.addEventListener('DOMContentLoaded', () => {
+        loadSettings();
+        loadHistoryUI();
+    });
+
+    function loadSettings() {
+        const saved = localStorage.getItem('yogurt_settings');
+        if(!saved) return;
+        try {
+            const data = JSON.parse(saved);
+            if(data.weight !== undefined) document.getElementById("robotWeight").value = data.weight;
+            if(data.rpm !== undefined) document.getElementById("robotRpm").value = data.rpm;
+            if(data.wheel !== undefined) document.getElementById("wheelSize").value = data.wheel;
+            if(data.motor11w !== undefined) document.getElementById("motor11w").value = data.motor11w;
+            if(data.motor5w !== undefined) document.getElementById("motor5w").value = data.motor5w;
+            if(data.dtEfficiency !== undefined) document.getElementById("dtEfficiency").value = data.dtEfficiency;
+            if(data.slewCap !== undefined) document.getElementById("slewCap").value = data.slewCap;
+            if(data.turnSpeed !== undefined) document.getElementById("turnSpeed").value = data.turnSpeed;
+        } catch(e) {}
+    }
+
+    function saveSettings() {
+        const data = {
+            weight: document.getElementById("robotWeight").value,
+            rpm: document.getElementById("robotRpm").value,
+            wheel: document.getElementById("wheelSize").value,
+            motor11w: document.getElementById("motor11w").value,
+            motor5w: document.getElementById("motor5w").value,
+            dtEfficiency: document.getElementById("dtEfficiency").value,
+            slewCap: document.getElementById("slewCap").value,
+            turnSpeed: document.getElementById("turnSpeed").value
+        };
+        localStorage.setItem('yogurt_settings', JSON.stringify(data));
+    }
+
+    function saveToHistory(rawText, timeStr) {
+        if(!rawText || !rawText.trim()) return;
+        let history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('yogurt_history')) || [];
+        } catch(e) {}
+
+        // Remove duplicate if exact same text exists
+        history = history.filter(item => item.raw !== rawText);
+
+        history.unshift({
+            raw: rawText,
+            time: timeStr,
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        if(history.length > 3) {
+            history.pop();
+        }
+
+        localStorage.setItem('yogurt_history', JSON.stringify(history));
+        loadHistoryUI();
+    }
+
+    function loadHistoryUI() {
+        let history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('yogurt_history')) || [];
+        } catch(e) {}
+
+        const container = document.getElementById('historyContainer');
+        if(!container) return;
+
+        if(history.length === 0) {
+            container.innerHTML = `<div style="color: var(--faint); font-size: 0.75rem; text-align: center;">No recent paths saved.</div>`;
+            return;
+        }
+
+        let html = '';
+        history.forEach((item, idx) => {
+            let preview = item.raw.split('\n')[0].replace(/\/\//g, '').trim().substring(0, 32) || `Path Session ${idx+1}`;
+            html += `
+            <div class="timeline-card timeline-card-history" style="padding: 8px 12px; cursor: pointer;" onclick="loadPathFromHistory(${idx})" title="Click to load this path">
+                <div>
+                    <div class="title" style="font-size: 0.78rem;">${preview}</div>
+                    <div class="details">${item.date}</div>
+                </div>
+                <div class="time" style="font-size: 0.85rem;">${item.time}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function loadPathFromHistory(idx) {
+        let history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('yogurt_history')) || [];
+        } catch(e) {}
+        if(history[idx]) {
+            document.getElementById('importArea').value = history[idx].raw;
+            smartImport();
+        }
+    }
+
+    function loadImageViaBlob(img, url) {
+        fetch(url).then(r => r.blob()).then(blob => {
+            img.onload = () => renderField();
+            img.src = URL.createObjectURL(blob);
+        }).catch(() => { img.onload = renderField; img.src = url; });
+    }
+
+    loadImageViaBlob(imgSkills, '../../assets/fields/Override_Skills_No_Walls_YogurtLib.png');
+    loadImageViaBlob(imgMatch,  '../../assets/fields/Override_H2H_No_Walls_YogurtLib.png');
+    loadImageViaBlob(imgWalls,  '../../assets/fields/Override_Walls_YogurtLib.png');
+
+    function fromInches(ix, iy) { 
+        const cx = fieldOffset + ((ix + (totalFieldInches/2)) * pixelsPerInch);
+        const cy = fieldOffset + (((totalFieldInches/2) - iy) * pixelsPerInch);
+        return { x: cx, y: cy }; 
+    }
+
+    let pathSegments = []; 
+    let timelineSteps = []; 
+
+    function smartImport() {
+        const raw = document.getElementById('importArea').value;
+        if(!raw) return;
+
+        isSkills = raw.includes("[Field]: SKILLS");
+        const blocks = raw.split(/\/\/ Segment \d+/);
+        pathSegments = [];
+        timelineSteps = [];
+
+        blocks.forEach((block, index) => {
+            const codeLines = block.split('\n').filter(line => !line.trim().startsWith('//'));
+            const cleanBlock = codeLines.join('\n');
+
+            const matches = [...cleanBlock.matchAll(/\{(-?\d+\.?\d*),\s*(-?\d+\.?\d*)\}/g)];
+            if(matches.length > 0) {
+                if (index === 0 && block.includes('[Start Pose Reference]')) {
+                    matches.shift(); 
+                }
+                
+                let points = matches.map(m => ({ x: parseFloat(m[1]), y: parseFloat(m[2]) }));
+                if(points.length > 1) {
+                    pathSegments.push(points);
+                }
+            }
+        });
+
+        for(let i = 0; i < pathSegments.length; i++) {
+            let seg = pathSegments[i];
+            
+            if (i > 0) {
+                let prevSeg = pathSegments[i-1];
+                let pLast = prevSeg[prevSeg.length-1];
+                let pPrev = prevSeg[prevSeg.length-2];
+                let pStart = seg[0];
+                let pNext = seg[1];
+                
+                let theta1 = Math.atan2(pLast.y - pPrev.y, pLast.x - pPrev.x);
+                let theta2 = Math.atan2(pNext.y - pStart.y, pNext.x - pStart.x);
+                
+                let diff = (theta2 - theta1) * (180 / Math.PI);
+                diff = ((diff + 180) % 360 + 360) % 360 - 180;
+                let angleDeg = Math.abs(diff);
+                
+                if (angleDeg > 1.0) {
+                    timelineSteps.push({
+                        type: 'turn',
+                        angleDeg: angleDeg
+                    });
+                }
+            }
+
+            let segmentInches = 0;
+            for(let j = 0; j < seg.length - 1; j++) {
+                segmentInches += Math.hypot(seg[j+1].x - seg[j].x, seg[j+1].y - seg[j].y);
+            }
+            
+            timelineSteps.push({ 
+                type: 'drive', 
+                segmentId: i + 1,
+                distanceInches: segmentInches 
+            });
+        }
+
+        renderField();
+        recalculate(); 
+    }
+
+    function renderField() {
+        ctx.clearRect(0,0,622,622);
+        
+        if(imgWalls.complete && imgWalls.naturalWidth > 0) {
+            ctx.drawImage(imgWalls, 0, 0, 622, 622);
+        }
+
+        const img = isSkills ? imgSkills : imgMatch;
+        if(img.complete) {
+            ctx.save();
+            ctx.translate(fieldOffset + 300, fieldOffset + 300);
+            ctx.drawImage(img, -300, -300, 600, 600);
+            ctx.restore();
+        }
+
+        pathSegments.forEach((seg, idx) => {
+            ctx.strokeStyle = '#8c52ff'; 
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            seg.forEach((p, i) => {
+                const c = fromInches(p.x, p.y);
+                if(i===0) ctx.moveTo(c.x, c.y);
+                else ctx.lineTo(c.x, c.y);
+            });
+            ctx.stroke();
+
+            const startNode = fromInches(seg[0].x, seg[0].y);
+            const endNode = fromInches(seg[seg.length-1].x, seg[seg.length-1].y);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(startNode.x, startNode.y, 4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(endNode.x, endNode.y, 4, 0, Math.PI*2); ctx.fill();
+        });
+    }
+    
+    function insertWait(index) {
+        timelineSteps.splice(index, 0, { type: 'wait', durationMs: 500 });
+        recalculate();
+    }
+
+    function removeWait(index) {
+        timelineSteps.splice(index, 1);
+        recalculate();
+    }
+
+    function updateWaitTime(index, value) {
+        timelineSteps[index].durationMs = parseFloat(value) || 0;
+        recalculate();
+    }
+
+    function recalculate() {
+        saveSettings();
+
+        let weightLbs = parseFloat(document.getElementById("robotWeight").value) || 13.0;
+        let massKg = weightLbs * 0.453592; 
+
+        let rpm = parseFloat(document.getElementById("robotRpm").value) || 450;
+        let wheelSizeInches = parseFloat(document.getElementById("wheelSize").value) || 3.25;
+        let wheelDiameterMeters = wheelSizeInches * 0.0254; 
+        
+        let motors11 = parseInt(document.getElementById("motor11w").value) || 4;
+        let motors5 = parseInt(document.getElementById("motor5w").value) || 0;
+        let efficiency = (parseFloat(document.getElementById("dtEfficiency").value) || 85) / 100;
+        
+        let slewCapInches = parseFloat(document.getElementById("slewCap").value) || 250;
+        let turnSpeed = parseFloat(document.getElementById("turnSpeed").value) || 300;
+
+        const baseCartridgeRpm = 200;
+        const baseMotorStallTorque = 1.05; 
+        const base5wStallTorque = 0.52;
+
+        let gearRatioFactor = baseCartridgeRpm / Math.max(rpm, 10);
+
+        let motorTorqueNm = ((motors11 * baseMotorStallTorque * gearRatioFactor) + (motors5 * base5wStallTorque * gearRatioFactor)) * efficiency; 
+        let maxVelocityInches = ((rpm * (Math.PI * wheelSizeInches)) / 60) * efficiency; 
+        
+        let driveForceNewtons = motorTorqueNm / (wheelDiameterMeters / 2);
+        let theoreticalAccelMs2 = driveForceNewtons / Math.max(massKg, 0.1);
+        let theoreticalAccelInches = theoreticalAccelMs2 / 0.0254; 
+        
+        let maxAcceleration = Math.min(theoreticalAccelInches, slewCapInches);
+
+        let totalRoutineMs = 0;
+        let htmlBuilder = `<div class="add-delay-btn" onclick="insertWait(0)">+ Insert Delay</div>`;
+
+        timelineSteps.forEach((step, idx) => {
+            if(step.type === 'wait') {
+                totalRoutineMs += step.durationMs;
+                htmlBuilder += `
+                <div class="timeline-card" style="border-color: var(--accent-line);">
+                    <div>
+                        <div class="title" style="color: var(--accent);">Wait Action</div>
+                        <div class="details">System pause</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="number" value="${step.durationMs}" onchange="updateWaitTime(${idx}, this.value)" style="width:60px; background:#000; border:1px solid #333; color:#fff; padding:4px; border-radius:4px;"> ms
+                        <button onclick="removeWait(${idx})" style="background:transparent; border:none; color:red; cursor:pointer;">&times;</button>
+                    </div>
+                </div>
+                <div class="add-delay-btn" onclick="insertWait(${idx + 1})">+ Insert Delay</div>`;
+                return; 
+            }
+
+            if(step.type === 'turn') {
+                let tDist = step.angleDeg;
+                let stepMs = (tDist / turnSpeed) * 1000;
+
+                totalRoutineMs += stepMs;
+
+                htmlBuilder += `
+                <div class="timeline-card" style="border-color: #666;">
+                    <div>
+                        <div class="title">Point Turn</div>
+                        <div class="details">${tDist.toFixed(1)}&deg; (Constant)</div>
+                    </div>
+                    <div class="time">${stepMs.toFixed(0)} ms</div>
+                </div>
+                <div class="add-delay-btn" onclick="insertWait(${idx + 1})">+ Insert Delay</div>`;
+                return;
+            }
+
+            let distInches = step.distanceInches;
+            let timeToAccelerate = maxVelocityInches / maxAcceleration;
+            let distToAccelerate = (Math.pow(maxVelocityInches, 2)) / (2 * maxAcceleration);
+            
+            let stepMs = 0;
+            let profileType = "Trapezoidal";
+
+            if (distInches > (distToAccelerate * 2)) {
+                let distAtCruise = distInches - (distToAccelerate * 2);
+                let timeAtCruise = distAtCruise / maxVelocityInches;
+                stepMs = ((timeToAccelerate * 2) + timeAtCruise) * 1000;
+            } else {
+                profileType = "Triangular";
+                let peakVelocity = Math.sqrt(distInches * maxAcceleration);
+                stepMs = ((peakVelocity / maxAcceleration) * 2) * 1000;
+            }
+
+            totalRoutineMs += stepMs;
+
+            htmlBuilder += `
+            <div class="timeline-card">
+                <div>
+                    <div class="title">Segment ${step.segmentId}</div>
+                    <div class="details">${distInches.toFixed(1)} in (${profileType})</div>
+                </div>
+                <div class="time">${stepMs.toFixed(0)} ms</div>
+            </div>
+            <div class="add-delay-btn" onclick="insertWait(${idx + 1})">+ Insert Delay</div>`;
+        });
+
+        document.getElementById("timelineContainer").innerHTML = htmlBuilder;
+        let formattedTime = `${(totalRoutineMs / 1000).toFixed(2)} s`;
+        document.getElementById("totalTimeDisplay").innerText = `Est: ${formattedTime}`;
+
+        // Save current path to history if a path is loaded
+        const rawImport = document.getElementById("importArea").value;
+        if(rawImport.trim().length > 0 && timelineSteps.length > 0) {
+            saveToHistory(rawImport, formattedTime);
+        }
+    }
+</script>
+</body>
+</html>
