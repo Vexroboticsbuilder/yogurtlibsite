@@ -130,7 +130,7 @@
 <body>
 
 <header class="site-header">
-    <div class="brand"><img src="../../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// PATHER</span></div>
+    <div class="brand"><img src="../../assets/logo.svg" alt="YogurtLib" style="height:28px;">YogurtLib<span class="sub">// PATHER</span></div>
   <nav class="site-nav">
     <a href="../../index.html">Home</a>
     <a href="../custom-pather/index.html" class="active">Custom Pather</a>
@@ -148,7 +148,7 @@
         
         <div class="vertical-slider-container">
             <span class="slider-label-vertical">ROBOT</span>
-            <input type="range" id="ghostSlider" min="0" max="1" step="0.001" value="0"">
+            <input type="range" id="ghostSlider" min="0" max="1" step="0.001" value="0">
             <span class="slider-label-vertical" style="margin-top:15px; margin-bottom:0;">PATH</span>
         </div>
     </div>
@@ -174,6 +174,25 @@
         <div style="display:flex; gap:8px;">
             <textarea class="input-box" id="importArea" placeholder="Paste path code here..." style="height:60px;"></textarea>
             <button class="secondary-btn" style="flex:0; min-width:80px;" onclick="smartImport()">Load</button>
+        </div>
+
+        <!-- Local Saved Paths Panel -->
+        <div style="background:#1a1a1a; padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid #333;">
+            <div style="font-size:0.7rem; color:#888; font-weight:bold; margin-bottom:8px; display:flex; justify-content:space-between;">
+                <span>SAVED PATHS (LOCAL STORAGE)</span>
+                <span id="savedCountLabel" style="color:var(--accent);">0 / 10</span>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <input type="text" id="pathNameInput" class="input-box" placeholder="Optional path name..." style="margin-bottom:0; flex:1;">
+                <button class="secondary-btn" style="flex:0; min-width:90px; background:var(--accent); color:#fff;" onclick="saveCurrentPathLocal()">Save Path</button>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <select id="savedPathsSelect" class="input-box" style="margin-bottom:0; flex:1; background:#000; color:#fff;">
+                    <option value="">-- Select a saved path --</option>
+                </select>
+                <button class="secondary-btn" style="flex:0; min-width:75px;" onclick="loadSelectedPath()">Load</button>
+                <button class="secondary-btn" style="flex:0; min-width:75px; background:#311; border-color:#522; color:#faa;" onclick="deleteSelectedPath()">Delete</button>
+            </div>
         </div>
         
         <div style="background:#1a1a1a; padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid #333;">
@@ -254,11 +273,10 @@
                 .then(blob => {
                     const blobUrl = URL.createObjectURL(blob);
                     img.onload = () => { onImageLoaded(); };
-                    img.onerror = () => { onImageLoaded(); }; // still render even if one fails
+                    img.onerror = () => { onImageLoaded(); };
                     img.src = blobUrl;
                 })
                 .catch(() => {
-                    // fallback: load directly (will taint canvas but at least shows)
                     img.onload = onImageLoaded;
                     img.src = url;
                 });
@@ -278,16 +296,58 @@
         let redoStack = [];
         let selectedSegment = -1;
 
+        // Track currently loaded path index from local storage (-1 if none or cleared)
+        let currentLoadedPathIndex = -1;
+
+        // --- Auto-save and Auto-load configuration ---
+        const AUTOSAVE_KEY = 'yogurtlib_autosave_path_v1';
+
+        function autoLoadLastPath() {
+            try {
+                const data = localStorage.getItem(AUTOSAVE_KEY);
+                if (data) {
+                    const p = JSON.parse(data);
+                    if (p && p.waypoints && p.waypoints.length > 0) {
+                        isSkills = p.isSkills !== undefined ? p.isSkills : isSkills;
+                        updateModeUI();
+                        showAdjustors = p.showAdjustors !== undefined ? p.showAdjustors : true;
+                        document.getElementById('handleToggle').className = showAdjustors ? 'toggle-on' : 'toggle-off';
+                        showArrows = p.showArrows !== undefined ? p.showArrows : true;
+                        document.getElementById('arrowToggle').className = showArrows ? 'toggle-on' : 'toggle-off';
+                        waypoints = p.waypoints;
+                        updateInputs();
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function autoSaveLastPath() {
+            try {
+                if (waypoints.length === 0) {
+                    localStorage.removeItem(AUTOSAVE_KEY);
+                    return;
+                }
+                const autoData = {
+                    isSkills: isSkills,
+                    showAdjustors: showAdjustors,
+                    showArrows: showArrows,
+                    waypoints: waypoints
+                };
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(autoData));
+            } catch(e) {}
+        }
+
+        // Run auto-load on startup right away
+        autoLoadLastPath();
+
         const totalFieldInches = 141.0;
         const canvasSize = 600;
-        const fieldOffset = 11; // (622 - 600) / 2, centers the 600px field in the 622px canvas
+        const fieldOffset = 11;
         const pixelsPerInch = canvasSize / totalFieldInches;
 
-        // Add a cached path canvas outside render()
         let pathCached = false;
         let cachedPathCanvas = null;
 
-        // rAF-based rendering: slider sets a dirty flag, rAF loop draws once per frame
         let robotDirty = false;
         let rafId = null;
 
@@ -304,9 +364,6 @@
             }
         }
 
-        let lastRenderTime = 0;
-        const RENDER_THROTTLE = 16; // ~60fps (kept for non-slider calls)
-
         function cacheStaticPath() {
             if (!cachedPathCanvas) {
                 cachedPathCanvas = document.createElement('canvas');
@@ -317,12 +374,10 @@
             const cacheCtx = cachedPathCanvas.getContext('2d');
             cacheCtx.clearRect(0, 0, 622, 622);
             
-            // Draw walls first at the very bottom, full 622x622
             if(imgWalls.complete && imgWalls.naturalWidth > 0) {
                 cacheCtx.drawImage(imgWalls, 0, 0, 622, 622);
             }
 
-            // Draw field image on top of walls, offset to center in the larger canvas
             const img = isSkills ? imgSkills : imgMatch;
             if(img.complete) {
                 cacheCtx.save();
@@ -331,7 +386,6 @@
                 cacheCtx.restore();
             }
             
-            // Draw all segments
             segments.forEach((seg, idx) => {
                 cacheCtx.strokeStyle = waypoints[idx].color || '#8c52ff';
                 cacheCtx.lineWidth = (selectedSegment === idx) ? 6 : 3;
@@ -349,14 +403,13 @@
                 cacheCtx.shadowBlur = 0;
             });
             
-            // Draw arrows — spaced every 60px of canvas distance
             if (showArrows) {
                 segments.forEach((seg, idx) => {
                     if (seg.length < 2) return;
                     cacheCtx.fillStyle = waypoints[idx].color || '#8c52ff';
 
-                    const ARROW_SPACING = 60; // pixels between arrows
-                    let distAccum = ARROW_SPACING / 2; // start mid-first-interval
+                    const ARROW_SPACING = 60;
+                    let distAccum = ARROW_SPACING / 2;
 
                     for (let i = 0; i < seg.length - 1; i++) {
                         const p1 = fromInches(seg[i].x, seg[i].y);
@@ -382,7 +435,6 @@
                 });
             }
             
-            // Draw waypoints
             waypoints.forEach((w, i) => {
                 const wp = fromInches(w.x, w.y);
                 const cp1 = fromInches(w.cx1, w.cy1);
@@ -419,6 +471,7 @@
             
             pathCached = true;
         }
+
         function fromInches(ix, iy) { 
             const cx = fieldOffset + ((ix + (totalFieldInches/2)) * pixelsPerInch);
             const cy = fieldOffset + (((totalFieldInches/2) - iy) * pixelsPerInch);
@@ -455,6 +508,7 @@
                 updateInputs(); processPath();
             }
         }
+
         function cycleColor() {
             if (selectedSegment === -1) return;
             saveState();
@@ -526,12 +580,10 @@
             const rect = canvas.getBoundingClientRect();
             const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
-            // Double-click a waypoint: straighten only the segment BEFORE it (i-1 -> i)
             for (let i = 0; i < waypoints.length; i++) {
                 const wp = fromInches(waypoints[i].x, waypoints[i].y);
                 if (Math.hypot(mouse.x - wp.x, mouse.y - wp.y) < 15) {
                     saveState();
-                    // Straighten segment coming INTO this waypoint (i-1 -> i)
                     if (i > 0) {
                         const a = waypoints[i - 1], b = waypoints[i];
                         const c1 = clampToField(a.x + (b.x - a.x) * 0.33, a.y + (b.y - a.y) * 0.33);
@@ -544,7 +596,6 @@
                 }
             }
 
-            // Double-click a segment: straighten just that segment
             const clickedSeg = isOverSegment(mouse.x, mouse.y);
             if (clickedSeg !== -1) {
                 saveState();
@@ -566,7 +617,7 @@
                 selectedSegment = clickedSeg; 
                 const segRes = waypoints[selectedSegment].res || globalResolution;
                 document.getElementById('resSlider').value = segRes;
-                resLabel.innerText = segRes.toFixed(1);;
+                resLabel.innerText = segRes.toFixed(1);
                 resTarget.innerText = `(Seg ${selectedSegment + 1})`;
                 cacheStaticPath();
                 renderRobot();
@@ -671,7 +722,15 @@
 
         function processPath() {
             segments = []; headingPath = []; let d = 0; let p = 0;
-            if(waypoints.length < 1) { odomLabel.innerText="{0.0, 0.0}"; distDisplay.innerText="0.0\""; countDisplay.innerText="0"; cacheStaticPath();renderRobot(); return; }
+            if(waypoints.length < 1) { 
+                odomLabel.innerText="{0.0, 0.0}"; 
+                distDisplay.innerText="0.0\""; 
+                countDisplay.innerText="0"; 
+                cacheStaticPath(); 
+                renderRobot(); 
+                autoSaveLastPath(); 
+                return; 
+            }
             odomLabel.innerText = `{${waypoints[0].x.toFixed(1)}, ${waypoints[0].y.toFixed(1)}}`;
             for(let i=0; i < waypoints.length - 1; i++) {
                 const p1 = waypoints[i], p2 = waypoints[i+1];
@@ -694,24 +753,27 @@
                 }
                 segments.push(seg);
 
-                // Build fine-resolution heading path at 0.1" steps (never changes with display res)
                 const HEADING_RES = 0.1;
                 const fineSteps = Math.max(10, Math.ceil(Math.hypot(p2.x - p1.x, p2.y - p1.y) / HEADING_RES));
                 for(let t=0; t<=fineSteps; t++){
-                    if(i > 0 && t === 0) continue; // skip duplicate junction point
+                    if(i > 0 && t === 0) continue;
                     let s = t/fineSteps;
                     let hx = Math.pow(1-s,3)*p1.x + 3*Math.pow(1-s,2)*s*p1.cx1 + 3*(1-s)*s*s*p1.cx2 + s*s*s*p2.x;
                     let hy = Math.pow(1-s,3)*p1.y + 3*Math.pow(1-s,2)*s*p1.cy1 + 3*(1-s)*s*s*p1.cy2 + s*s*s*p2.y;
                     headingPath.push({x: hx, y: hy});
                 }
             }
-            distDisplay.innerText = d.toFixed(1) + '"'; countDisplay.innerText = p; updateTextList(); cacheStaticPath(); renderRobot();
+            distDisplay.innerText = d.toFixed(1) + '"'; 
+            countDisplay.innerText = p; 
+            updateTextList(); 
+            cacheStaticPath(); 
+            renderRobot(); 
+            autoSaveLastPath(); // Trigger auto-save on path change
         }
 
         function updateTextList() {
             let h = `<b>// [Field]: ${isSkills ? "SKILLS" : "MATCH"}</b>\n<b>// [ShowHandles]: ${showAdjustors}</b>\n<b>// [ShowArrows]: ${showArrows}</b>\n`;
             if (waypoints.length > 0) {
-                // FIXED IMPORT: Reference comment for the absolute start pose
                 h += `<b>// [Start Pose Reference]: {X: ${waypoints[0].x.toFixed(1)}, Y: ${waypoints[0].y.toFixed(1)}}</b>\n`;
                 let startComma = (segments.length > 0) ? "," : "";
                 h += `{pose.x, pose.y}${startComma}\n`;
@@ -736,26 +798,20 @@
         function renderRobot() {
             ctx.clearRect(0,0,622,622);
             
-            // Draw cached path
             if (pathCached && cachedPathCanvas) {
                 ctx.drawImage(cachedPathCanvas, 0, 0);
             }
             
-            // Draw only the robot
             const flatPath = segments.flat();
             if(showGhost && flatPath.length > 1) {
                 const progress = parseFloat(ghostSlider.value);
 
-                // Use headingPath (fixed 0.1" resolution) for BOTH position and heading
-                // so the robot glides smoothly regardless of display resolution
                 let p1, angle = 0;
                 if (headingPath.length > 1) {
                     const hIdx = Math.min(Math.floor(progress * (headingPath.length - 1)), headingPath.length - 2);
-                    // Smooth sub-index interpolation for pixel-perfect position
                     const hFrac = (progress * (headingPath.length - 1)) - hIdx;
                     const hA = headingPath[hIdx], hB = headingPath[Math.min(hIdx + 1, headingPath.length - 1)];
                     p1 = fromInches(hA.x + (hB.x - hA.x) * hFrac, hA.y + (hB.y - hA.y) * hFrac);
-                    // Lookahead over ~1" worth of fine steps (10 steps at 0.1")
                     const LOOK = 10;
                     const ahead  = Math.min(hIdx + LOOK, headingPath.length - 1);
                     const behind = Math.max(hIdx - LOOK, 0);
@@ -796,21 +852,34 @@
             cacheStaticPath();
             renderRobot();
             updateTextList();
+            autoSaveLastPath();
         }
+
         function toggleArrows() { 
             showArrows = !showArrows; 
             document.getElementById('arrowToggle').className = showArrows ? 'toggle-on' : 'toggle-off';
             cacheStaticPath();
             renderRobot();
             updateTextList();
+            autoSaveLastPath();
         }
+
         function toggleGhost() {
             showGhost = !showGhost;
             document.getElementById('ghostToggle').className = showGhost ? 'toggle-on' : 'toggle-off';
             cacheStaticPath();
             renderRobot();
         }
-        function clearPath() { saveState(); waypoints = []; updateInputs(); processPath(); }
+
+        function clearPath() { 
+            saveState(); 
+            waypoints = []; 
+            currentLoadedPathIndex = -1; 
+            document.getElementById('pathNameInput').value = '';
+            try { localStorage.removeItem(AUTOSAVE_KEY); } catch(e) {}
+            updateInputs(); 
+            processPath(); 
+        }
         
         function toggleMode() { 
             isSkills = !isSkills; 
@@ -818,6 +887,7 @@
             cacheStaticPath();
             renderRobot();
             updateTextList();
+            autoSaveLastPath();
         }
 
         function updateModeUI() {
@@ -846,34 +916,161 @@
             setTimeout(() => { btn.innerText = "Copy Path"; }, 800);
         }
 
+        // --- Local Storage Saved Paths (Max 10) ---
+        const STORAGE_KEY = 'yogurtlib_saved_paths_v1';
+
+        function getSavedPaths() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveSavedPaths(paths) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(paths));
+            } catch(e) {}
+        }
+
+        function updateSavedPathsUI() {
+            const select = document.getElementById('savedPathsSelect');
+            const countLabel = document.getElementById('savedCountLabel');
+            if (!select) return;
+            const paths = getSavedPaths();
+            if (countLabel) countLabel.innerText = `${paths.length} / 10`;
+            select.innerHTML = '<option value="">-- Select a saved path --</option>';
+            paths.forEach((p, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `${p.name} (${p.date})`;
+                select.appendChild(opt);
+            });
+            if (currentLoadedPathIndex !== -1 && paths[currentLoadedPathIndex]) {
+                select.value = currentLoadedPathIndex;
+            }
+        }
+
+        function saveCurrentPathLocal() {
+            if (waypoints.length === 0) {
+                alert('Cannot save an empty path.');
+                return;
+            }
+            const nameInput = document.getElementById('pathNameInput');
+            let customName = nameInput.value.trim();
+            
+            let paths = getSavedPaths();
+
+            if (currentLoadedPathIndex !== -1 && paths[currentLoadedPathIndex]) {
+                if (!customName) {
+                    customName = paths[currentLoadedPathIndex].name;
+                }
+                paths[currentLoadedPathIndex] = {
+                    name: customName,
+                    date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isSkills: isSkills,
+                    showAdjustors: showAdjustors,
+                    showArrows: showArrows,
+                    waypoints: waypoints
+                };
+            } else {
+                if (!customName) {
+                    customName = `Path ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${isSkills ? 'Skills' : 'Match'})`;
+                }
+                const pathData = {
+                    name: customName,
+                    date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isSkills: isSkills,
+                    showAdjustors: showAdjustors,
+                    showArrows: showArrows,
+                    waypoints: waypoints
+                };
+
+                paths.unshift(pathData);
+                if (paths.length > 10) {
+                    paths = paths.slice(0, 10);
+                }
+                currentLoadedPathIndex = 0; 
+            }
+
+            saveSavedPaths(paths);
+            updateSavedPathsUI();
+            
+            const saveBtn = event.target;
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = "SAVED!";
+            setTimeout(() => { saveBtn.innerText = originalText; }, 1000);
+        }
+
+        function loadSelectedPath() {
+            const select = document.getElementById('savedPathsSelect');
+            const idx = select.value;
+            if (idx === "") {
+                alert('Please select a path to load.');
+                return;
+            }
+            const paths = getSavedPaths();
+            const p = paths[idx];
+            if (!p) return;
+
+            currentLoadedPathIndex = parseInt(idx);
+            document.getElementById('pathNameInput').value = p.name;
+
+            saveState();
+            isSkills = p.isSkills;
+            updateModeUI();
+            showAdjustors = p.showAdjustors !== undefined ? p.showAdjustors : true;
+            document.getElementById('handleToggle').className = showAdjustors ? 'toggle-on' : 'toggle-off';
+            showArrows = p.showArrows !== undefined ? p.showArrows : true;
+            document.getElementById('arrowToggle').className = showArrows ? 'toggle-on' : 'toggle-off';
+
+            waypoints = JSON.parse(JSON.stringify(p.waypoints));
+            updateInputs();
+            processPath();
+        }
+
+        function deleteSelectedPath() {
+            const select = document.getElementById('savedPathsSelect');
+            const idx = select.value;
+            if (idx === "") {
+                alert('Please select a path to delete.');
+                return;
+            }
+            let paths = getSavedPaths();
+            paths.splice(idx, 1);
+            saveSavedPaths(paths);
+            currentLoadedPathIndex = -1; 
+            updateSavedPathsUI();
+            document.getElementById('pathNameInput').value = '';
+        }
+
         function smartImport() {
             const raw = document.getElementById('importArea').value; if(!raw) return;
             
-            // AUTO LOAD FIELD TYPE
+            currentLoadedPathIndex = -1; 
+            document.getElementById('pathNameInput').value = '';
+
             if (raw.includes("[Field]: SKILLS")) isSkills = true;
             else if (raw.includes("[Field]: MATCH")) isSkills = false;
             updateModeUI();
 
-            // AUTO LOAD HANDLES VISIBILITY
             if (raw.includes("[ShowHandles]: false")) showAdjustors = false;
             else if (raw.includes("[ShowHandles]: true")) showAdjustors = true;
             document.getElementById('handleToggle').className = showAdjustors ? 'toggle-on' : 'toggle-off';
 
-            // AUTO LOAD ARROWS VISIBILITY
             if (raw.includes("[ShowArrows]: false")) showArrows = false;
             else if (raw.includes("[ShowArrows]: true")) showArrows = true;
             document.getElementById('arrowToggle').className = showArrows ? 'toggle-on' : 'toggle-off';
 
-            // FIXED IMPORT LOGIC: Find the start pose reference from comments
             const startRef = raw.match(/\[Start Pose Reference\]: \{X: (-?\d+\.?\d*), Y: (-?\d+\.?\d*)\}/);
             const segmentBlocks = raw.split(/\/\/ Segment \d+/).filter(b => b.includes('Waypoint'));
             const newWps = [];
 
             if (startRef) {
-                // Add the initial Start Point (Pose Point)
                 newWps.push({ 
                     x: parseFloat(startRef[1]), y: parseFloat(startRef[2]), 
-                    cx1: 0, cy1: 0, cx2: 0, cy2: 0, // Temp controls
+                    cx1: 0, cy1: 0, cx2: 0, cy2: 0,
                     color: '#8c52ff', res: globalResolution 
                 });
 
@@ -885,7 +1082,6 @@
                     const resMatch = block.match(/\[Res\]: (\d+\.?\d*)/);
 
                     if (wpMatch && c1Match && c2Match) {
-                        // Apply controls and color to the segment originating from previous point
                         newWps[i].cx1 = parseFloat(c1Match[1]);
                         newWps[i].cy1 = parseFloat(c1Match[2]);
                         newWps[i].cx2 = parseFloat(c2Match[1]);
@@ -893,7 +1089,6 @@
                         newWps[i].color = colMatch ? colMatch[1] : '#8c52ff';
                         newWps[i].res = resMatch ? parseFloat(resMatch[1]) : globalResolution;
 
-                        // Create the next point
                         newWps.push({
                             x: parseFloat(wpMatch[1]), y: parseFloat(wpMatch[2]),
                             cx1: 0, cy1: 0, cx2: 0, cy2: 0, color: '#8c52ff', res: globalResolution
@@ -913,17 +1108,13 @@
             exportCanvas.height = 622;
             const exportCtx = exportCanvas.getContext('2d');
 
-            // Draw cached path (field + paths + waypoints) if available
             if (pathCached && cachedPathCanvas) {
                 exportCtx.drawImage(cachedPathCanvas, 0, 0);
             }
 
-            // Draw robot at current slider position
             const flatPath = segments.flat();
             if (showGhost && flatPath.length > 1) {
                 const progress = parseFloat(ghostSlider.value);
-                const idx = Math.min(Math.floor(progress * (flatPath.length - 1)), flatPath.length - 2);
-                // Use headingPath (0.1" resolution) for smooth position + stable heading in snapshot
                 let p1, angle = 0;
                 if (headingPath.length > 1) {
                     const hIdx = Math.min(Math.floor(progress * (headingPath.length - 1)), headingPath.length - 2);
@@ -972,7 +1163,12 @@
             }
         }
 
-        function render() { cacheStaticPath(); renderRobot(); }
+        // Initialize processed path state from auto-load before rendering
+        if (waypoints.length > 0) {
+            processPath();
+        }
+
+        function render() { cacheStaticPath(); renderRobot(); updateSavedPathsUI(); }
     </script>
 </body>
 </html>
