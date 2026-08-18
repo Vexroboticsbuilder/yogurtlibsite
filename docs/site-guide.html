@@ -26,41 +26,43 @@
 <body>
 
 <header class="site-header">
-  <div class="brand"><span class="brand-dot"></span>210E<span class="sub">// TOOLKIT</span></div>
+    <div class="brand"><img src="../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// Auton Sim</span></div>
   <nav class="site-nav">
-    <a href="../index.html">Home</a>
-    <a href="../tools/custom-pather/index.html">Custom Pather</a>
-    <a href="../tools/data-visualizer/index.html">Data Visualizer</a>
-    <a href="../tools/auton-sim/index.html">Autonomus Simulator</a>
-    <a href="index.html" class="active">Docs</a>
+    <a href="../home.html">Home</a>
+    <a href="../tools/custom-pather.html">Custom Pather</a>
+    <a href="../tools/data-visualizer.html">Data Visualizer</a>
+    <a href="../tools/auton-sim.html">Autonomus Simulator</a>
+    <a href="../tools/auton-time-calc.html" >Time Calculator</a>
+    <a href="../tools/image-converter.html" >Image converter</a>
+    <a href="docs-home.html"class="active">Docs</a>
   </nav>
 </header>
 
 <article>
-  <a class="back-link" href="index.html">← Docs</a>
+  <a class="back-link" href="docs-home.html">← Docs</a>
   <span class="eyebrow">Site guide</span>
   <h1>Adding a tool or doc page</h1>
   <p>This site is plain HTML/CSS/JS with no build step — every page is a real file you can open and edit directly.</p>
 
   <h2>Folder layout</h2>
   <pre>yogurtlib-site/
-├── index.html              ← homepage / hub
+├── docs-home.html              ← homepage / hub
 ├── assets/
 │   └── style.css           ← shared colors, fonts, nav, footer
 ├── tools/
 │   ├── custom-pather/
-│   │   └── index.html
+│   │   └── docs-home.html
 │   └── data-visualizer/
-│       └── index.html
+│       └── docs-home.html
 ├── docs/
-│   ├── index.html
+│   ├── docs-home.html
 │   ├── getting-started.html
 │   └── site-guide.html
 └── CNAME                   ← yogurtlib.com (for GitHub Pages)</pre>
 
   <h2>Adding a new tool</h2>
   <ul>
-    <li>Create <code>tools/&lt;tool-name&gt;/index.html</code>.</li>
+    <li>Create <code>tools/&lt;tool-name&gt;/docs-home.html</code>.</li>
     <li>Link the shared stylesheet: <code>&lt;link rel="stylesheet" href="../../assets/style.css"&gt;</code>.</li>
     <li>Copy the header/footer markup from an existing tool page and add a link to your new tool in the nav on <b>every</b> page (home, other tools, docs).</li>
     <li>Add a card for it on the homepage inside the <code>.tool-grid</code>.</li>
@@ -69,7 +71,7 @@
   <h2>Adding a doc page</h2>
   <ul>
     <li>Create <code>docs/&lt;page-name&gt;.html</code>, copying the layout from <code>getting-started.html</code>.</li>
-    <li>Link it from <code>docs/index.html</code>'s <code>.doc-list</code>.</li>
+    <li>Link it from <code>docs/docs-home.html</code>'s <code>.doc-list</code>.</li>
   </ul>
 
   <h2>Design tokens</h2>
@@ -80,7 +82,7 @@
 </article>
 
 <footer class="site-footer">
-  <span>210E — yogurtlib.com</span>
+  <span>yogurtlib.com</span>
   <span>Docs / Site Guide</span>
 </footer>
 

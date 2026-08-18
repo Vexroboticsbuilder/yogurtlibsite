@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>YogurtLib - Multi-Robot Auton Simulator</title>
-    <link rel="stylesheet" href="../../assets/style.css">
+    <link rel="stylesheet" href="../assets/style.css">
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
@@ -130,13 +130,15 @@
 <body>
 
 <header class="site-header">
-    <div class="brand"><img src="../../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// AUTON SIM</span></div>
+    <div class="brand"><img src="../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// Auton Sim</span></div>
   <nav class="site-nav">
-    <a href="../../index.html">Home</a>
-    <a href="../custom-pather/index.html">Custom Pather</a>
-    <a href="../data-visualizer/index.html">Data Visualizer</a>
-    <a href="../auton-sim/index.html" class="active">Autonomus Simulator</a>
-    <a href="../../docs/index.html">Docs</a>
+    <a href="../home.html">Home</a>
+    <a href="custom-pather.html">Custom Pather</a>
+    <a href="data-visualizer.html">Data Visualizer</a>
+    <a href="auton-sim.html" class="active">Autonomus Simulator</a>
+    <a href="auton-time-calc.html" >Time Calculator</a>
+    <a href="image-converter.html" >Image converter</a>
+    <a href="../docs/docs-home.html">Docs</a>
   </nav>
 </header>
 
@@ -293,8 +295,8 @@
     
     imgMatch.onload = () => { imagesLoaded++; checkRender(); };
     imgWalls.onload = () => { imagesLoaded++; checkRender(); };
-    imgMatch.src = '../../assets/fields/Override_H2H_No_Walls_YogurtLib.png';
-    imgWalls.src = '../../assets/fields/Override_Walls_YogurtLib.png';
+    imgMatch.src = '../assets/fields/Override_H2H_No_Walls_YogurtLib.png';
+    imgWalls.src = '../assets/fields/Override_Walls_YogurtLib.png';
 
     let activeRobotIdx = 0;
     let robots = [

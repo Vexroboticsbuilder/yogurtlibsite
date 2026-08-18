@@ -1,0 +1,1641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LVGL Image Converter</title>
+<meta name="description" content="Convert PNG images to LVGL C arrays or .bin assets, entirely in your browser.">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+
+  /* Site-wide theme (colors, fonts) comes from style.css's :root above.
+     These are the handful of extra tones this tool needs that the
+     shared palette doesn't define — layered on top, not replacing it. */
+  :root{
+    --bg-raised: #0a0a0d;
+    --panel-2: #131319;
+    --red: #ff6b57;
+  }
+
+
+  /* ---------- layout ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 860px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--panel-2);
+  }
+  .panel-head .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .panel-body{ padding: 16px; }
+
+  /* ---------- drop zone ---------- */
+  .drop{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px dashed var(--panel-border);
+    background: var(--bg-raised);
+    padding: 30px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .drop:hover, .drop.drag{
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .drop .icon{
+    font-size: 22px;
+    color: var(--faint);
+    margin-bottom: 10px;
+  }
+  .drop .primary{ color: var(--text); }
+  .drop .secondary{ color: var(--faint); font-size: 12px; margin-top: 6px; }
+  .drop input[type=file]{ display:none; }
+
+  .preview-stage{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height: 180px;
+    background:
+      linear-gradient(45deg, #202524 25%, transparent 25%),
+      linear-gradient(-45deg, #202524 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #202524 75%),
+      linear-gradient(-45deg, transparent 75%, #202524 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    background-color: #17201d;
+    overflow: hidden;
+  }
+  .preview-stage canvas{
+    image-rendering: pixelated;
+    max-width: 100%;
+    max-height: 360px;
+    cursor: crosshair;
+  }
+  .preview-stage.empty{ color: var(--faint); font-size: 12.5px; cursor: default; }
+
+  .file-meta{
+    display:flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 14px;
+    border-top: 1px solid var(--panel-border);
+  }
+  .file-meta span b{ color: var(--text); font-weight: 600; }
+
+  /* ---------- form controls ---------- */
+  .field{ margin-bottom: 16px; }
+  .field:last-child{ margin-bottom: 0; }
+  .field label{
+    display:block;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field .hint{
+    font-size: 11.5px;
+    color: var(--faint);
+    margin-top: 5px;
+  }
+  select, input[type=number], input[type=text]{
+    width: 100%;
+    background: var(--bg-raised);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+  select:focus, input:focus{ border-color: var(--accent); }
+  optgroup{ font-style: normal; color: var(--muted); }
+
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .check{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 6px 0;
+  }
+  .check input{ accent-color: var(--accent); width:14px; height:14px; }
+  .check.disabled{ color: var(--faint); cursor: default; }
+
+  input[type=color]{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 40px; height: 32px;
+    padding: 2px;
+    background: var(--bg-raised);
+    border: 1px solid var(--panel-border);
+    cursor: pointer;
+  }
+  .bg-row{ display:flex; align-items:center; gap: 10px; }
+  .bg-row input[type=text]{ flex:1; }
+
+  button{
+    font-family: var(--font-mono);
+    cursor: pointer;
+  }
+  .btn{
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 9px 14px;
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    transition: border-color .12s ease, color .12s ease;
+  }
+  .btn:hover{ border-color: var(--muted); }
+  .btn-primary{
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .btn-primary:hover{ filter: brightness(1.12); }
+  .btn-primary:disabled{
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+    color: var(--faint);
+    cursor: not-allowed;
+    filter: none;
+  }
+  .btn-block{ width:100%; }
+  .btn-row{ display:flex; gap: 10px; flex-wrap: wrap; }
+  .btn-row .btn{ flex:1; }
+
+  /* ---------- output section ---------- */
+  .output-section{ margin-top: 18px; }
+  .stat-row{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--panel-border);
+    border-bottom: none;
+  }
+  .stat{
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--panel-border);
+    border-right: 1px solid var(--panel-border);
+  }
+  .stat:last-child{ border-right: none; }
+  .stat .k{ font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+  .stat .v{ font-family: var(--font-mono); font-size: 16px; color: var(--accent); margin-top: 3px; }
+
+  details.code-view{
+    border: 1px solid var(--panel-border);
+    border-top: none;
+  }
+  details.code-view > summary{
+    list-style:none;
+    cursor:pointer;
+    padding: 10px 14px;
+    background: var(--panel-2);
+    font-size: 12px;
+    color: var(--muted);
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  details.code-view > summary::-webkit-details-marker{ display:none; }
+  details.code-view > summary .arrow::before{ content:'▸ '; }
+  details.code-view[open] > summary .arrow::before{ content:'▾ '; }
+  pre.code{
+    margin:0;
+    padding: 14px;
+    max-height: 340px;
+    overflow: auto;
+    font-size: 12px;
+    line-height:1.6;
+    color: var(--muted);
+    background: var(--bg-raised);
+    border-top: 1px solid var(--panel-border);
+  }
+
+  /* ---------- pixel inspector (signature element) ---------- */
+  .inspector{
+    margin-top: 18px;
+    border: 1px solid var(--accent-line);
+    background: linear-gradient(180deg, var(--accent-soft), var(--panel) 40px);
+  }
+  .inspector .panel-head{ background: transparent; border-color: var(--accent-soft); }
+  .inspector .panel-head .eyebrow{ color: var(--accent); }
+  .inspector-body{
+    display:grid;
+    grid-template-columns: 100px 1fr;
+    gap: 18px;
+    padding: 16px;
+    align-items:center;
+  }
+  @media (max-width: 560px){
+    .inspector-body{ grid-template-columns: 1fr; }
+  }
+  .swatch{
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1px solid var(--panel-border);
+    background-image:
+      linear-gradient(45deg, #202524 25%, transparent 25%),
+      linear-gradient(-45deg, #202524 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #202524 75%),
+      linear-gradient(-45deg, transparent 75%, #202524 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+    position: relative;
+  }
+  .swatch .fill{ position:absolute; inset:0; }
+  .inspector-data .coord{
+    font-size: 11px; color: var(--faint); margin-bottom: 8px;
+  }
+  .inspector-data .layout{
+    font-size: 13px;
+    color: var(--cyan);
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+    word-break: break-word;
+  }
+  .byte-strip{ display:flex; gap: 6px; flex-wrap: wrap; }
+  .byte-chip{
+    border: 1px solid var(--panel-border);
+    background: var(--bg-raised);
+    padding: 4px 8px;
+    font-size: 12.5px;
+    color: var(--text);
+  }
+  .byte-chip .lbl{ color: var(--faint); font-size: 10px; display:block; }
+  .inspector-empty{
+    padding: 16px;
+    color: var(--faint);
+    font-size: 12.5px;
+  }
+
+  /* ---------- misc ---------- */
+  .notice{
+    font-size: 12px;
+    color: var(--faint);
+    padding: 10px 14px;
+    border-top: 1px solid var(--panel-border);
+    background: var(--bg-raised);
+  }
+  .notice.error{ color: var(--red); }
+  .format-desc{
+    font-size: 12px;
+    color: var(--faint);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  footer{
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 1px solid var(--panel-border);
+    color: var(--faint);
+    font-size: 11.5px;
+    display:flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site-header">
+    <div class="brand"><img src="../assets/logo.svg" alt="YogurtLib" style="height:28px;"></span>YogurtLib<span class="sub">// Image Converter</span></div>
+  <nav class="site-nav">
+    <a href="../home.html">Home</a>
+    <a href="custom-pather.html">Custom Pather</a>
+    <a href="data-visualizer.html">Data Visualizer</a>
+    <a href="auton-sim.html">Autonomus Simulator</a>
+    <a href="auton-time-calc.html">Time Calculator</a>
+    <a href="image-converter.html"class="active" >Image converter</a>
+    <a href="../docs/docs-home.html">Docs</a>
+  </nav>
+</header>
+
+  <div class="grid">
+
+    <!-- LEFT: source -->
+    <section class="panel">
+      <div class="panel-head"><span class="eyebrow">01 · Source</span><span id="srcFormatLabel" style="font-size:11px;color:var(--faint)"></span></div>
+      <div class="panel-body">
+        <label class="drop" id="dropZone" tabindex="0">
+          <input type="file" id="fileInput" accept="image/png">
+          <div class="icon">⇩</div>
+          <div class="primary">Drop a PNG here, or click to choose</div>
+          <div class="secondary">Any PNG works — RGB, RGBA, or already-paletted</div>
+        </label>
+        <div class="preview-stage empty" id="srcStage" style="margin-top:12px;">no image loaded</div>
+      </div>
+      <div class="file-meta" id="srcMeta" style="display:none;">
+        <span>dimensions <b id="srcDims">—</b></span>
+        <span>file <b id="srcFileName">—</b></span>
+      </div>
+    </section>
+
+    <!-- RIGHT: options -->
+    <section class="panel">
+      <div class="panel-head"><span class="eyebrow">02 · Format &amp; options</span></div>
+      <div class="panel-body">
+
+        <div class="field">
+          <label for="cfSelect">Color format</label>
+          <select id="cfSelect">
+            <optgroup label="Colormap (RGB / ARGB)">
+              <option value="RGB565">RGB565 — 16bpp, no alpha</option>
+              <option value="RGB565_SWAPPED">RGB565_SWAPPED — 16bpp, byte-swapped</option>
+              <option value="RGB888">RGB888 — 24bpp, no alpha</option>
+              <option value="XRGB8888">XRGB8888 — 32bpp, alpha forced 0xFF</option>
+              <option value="ARGB8888" selected>ARGB8888 — 32bpp with alpha</option>
+              <option value="ARGB8888_PREMULTIPLIED">ARGB8888_PREMULTIPLIED — 32bpp, RGB× alpha baked in</option>
+              <option value="ARGB8565">ARGB8565 — 24bpp with alpha</option>
+              <option value="RGB565A8">RGB565A8 — 16bpp color + separate 8bpp alpha plane</option>
+            </optgroup>
+            <optgroup label="Indexed (palette)">
+              <option value="I1">I1 — 1bpp, 2-color palette</option>
+              <option value="I2">I2 — 2bpp, 4-color palette</option>
+              <option value="I4">I4 — 4bpp, 16-color palette</option>
+              <option value="I8">I8 — 8bpp, 256-color palette</option>
+            </optgroup>
+            <optgroup label="Alpha only">
+              <option value="A1">A1 — 1bpp mask</option>
+              <option value="A2">A2 — 2bpp mask</option>
+              <option value="A4">A4 — 4bpp mask</option>
+              <option value="A8">A8 — 8bpp mask</option>
+            </optgroup>
+            <optgroup label="Luminance">
+              <option value="L8">L8 — 8bpp grayscale</option>
+              <option value="AL88">AL88 — 8bpp grayscale + 8bpp alpha</option>
+            </optgroup>
+          </select>
+          <div class="format-desc" id="cfDesc"></div>
+        </div>
+
+        <div class="row2">
+          <div class="field" id="bgField">
+            <label for="bgColor">Background (flattens alpha)</label>
+            <div class="bg-row">
+              <input type="color" id="bgColor" value="#000000">
+              <input type="text" id="bgColorText" value="#000000" maxlength="7">
+            </div>
+          </div>
+          <div class="field" id="alignField">
+            <label for="alignInput">Stride alignment (bytes)</label>
+            <input type="number" id="alignInput" min="1" step="1" value="1">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Options</label>
+          <label class="check" id="ditherRow">
+            <input type="checkbox" id="ditherCheck">
+            Ordered dither (reduces banding on RGB565-family gradients)
+          </label>
+          <label class="check" id="premultRow">
+            <input type="checkbox" id="premultCheck">
+            Pre-multiply alpha into color data
+          </label>
+        </div>
+
+        <div class="field">
+          <label for="compressSelect">Compression</label>
+          <select id="compressSelect">
+            <option value="NONE">None</option>
+            <option value="RLE">RLE</option>
+          </select>
+          <div class="hint">LZ4 isn't available in-browser yet — use the Python script if you need it.</div>
+        </div>
+
+        <div class="field">
+          <label for="nameInput">Variable / file name</label>
+          <input type="text" id="nameInput" value="image" spellcheck="false">
+        </div>
+
+        <button class="btn btn-primary btn-block" id="convertBtn" disabled>Load an image first</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- OUTPUT -->
+  <section class="output-section" id="outputSection" style="display:none;">
+    <section class="panel">
+      <div class="panel-head"><span class="eyebrow">03 · Result</span></div>
+      <div class="preview-stage" id="outStage"></div>
+      <div class="stat-row">
+        <div class="stat"><div class="k">Packed size</div><div class="v" id="statSize">—</div></div>
+        <div class="stat"><div class="k">Stride</div><div class="v" id="statStride">—</div></div>
+        <div class="stat"><div class="k">vs. raw RGBA</div><div class="v" id="statRatio">—</div></div>
+      </div>
+      <div class="panel-body" style="padding-top:14px;">
+        <div class="btn-row">
+          <button class="btn btn-primary" id="downloadBin">Download .bin</button>
+          <button class="btn" id="downloadC">Download .c</button>
+          <button class="btn" id="copyC">Copy C array</button>
+        </div>
+      </div>
+      <details class="code-view">
+        <summary><span class="arrow">C array preview</span><span id="cSizeLabel"></span></summary>
+        <pre class="code" id="cCode"></pre>
+      </details>
+      <div class="notice" id="paletteNotice" style="display:none;"></div>
+    </section>
+
+    <!-- Pixel inspector: signature element -->
+    <section class="inspector">
+      <div class="panel-head"><span class="eyebrow">Pixel inspector</span><span style="font-size:11px;color:var(--faint)">click a pixel above</span></div>
+      <div class="inspector-empty" id="inspectorEmpty">Click any pixel in the result preview to see exactly how it's packed.</div>
+      <div class="inspector-body" id="inspectorBody" style="display:none;">
+        <div class="swatch"><div class="fill" id="swatchFill"></div></div>
+        <div class="inspector-data">
+          <div class="coord" id="inspCoord">—</div>
+          <div class="layout" id="inspLayout">—</div>
+          <div class="byte-strip" id="inspBytes"></div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <footer>
+    <span>Ported from LVGL's <code>LVGLImage.py</code> — packing verified byte-for-byte against the reference script.</span>
+    <span>Works offline once loaded · no data leaves this tab</span>
+  </footer>
+</div>
+
+<script>
+// LVGL image conversion core — a JS port of LVGLImage.py's PNG->LVGL logic.
+// No DOM dependency here so it can be exercised under Node for verification,
+// then included as-is in the browser tool.
+
+(function (root) {
+  'use strict';
+
+  // ---------- Color format table ----------
+  const CF = {
+    L8: { name: 'L8', value: 0x06, bpp: 8 },
+    I1: { name: 'I1', value: 0x07, bpp: 1, ncolors: 2 },
+    I2: { name: 'I2', value: 0x08, bpp: 2, ncolors: 4 },
+    I4: { name: 'I4', value: 0x09, bpp: 4, ncolors: 16 },
+    I8: { name: 'I8', value: 0x0A, bpp: 8, ncolors: 256 },
+    A1: { name: 'A1', value: 0x0B, bpp: 1 },
+    A2: { name: 'A2', value: 0x0C, bpp: 2 },
+    A4: { name: 'A4', value: 0x0D, bpp: 4 },
+    A8: { name: 'A8', value: 0x0E, bpp: 8 },
+    AL88: { name: 'AL88', value: 0x15, bpp: 16 },
+    ARGB8888: { name: 'ARGB8888', value: 0x10, bpp: 32 },
+    XRGB8888: { name: 'XRGB8888', value: 0x11, bpp: 32 },
+    RGB565: { name: 'RGB565', value: 0x12, bpp: 16 },
+    RGB565_SWAPPED: { name: 'RGB565_SWAPPED', value: 0x1B, bpp: 16 },
+    ARGB8565: { name: 'ARGB8565', value: 0x13, bpp: 24 },
+    RGB565A8: { name: 'RGB565A8', value: 0x14, bpp: 16 },
+    RGB888: { name: 'RGB888', value: 0x0F, bpp: 24 },
+    ARGB8888_PREMULTIPLIED: { name: 'ARGB8888_PREMULTIPLIED', value: 0x1A, bpp: 32 },
+  };
+
+  const ALPHA_ONLY = new Set(['A1', 'A2', 'A4', 'A8']);
+  const HAS_ALPHA_EXTRA = new Set([
+    'AL88', 'ARGB8888', 'XRGB8888', 'ARGB8565', 'RGB565A8', 'ARGB8888_PREMULTIPLIED',
+  ]);
+  const COLORMAP = new Set([
+    'ARGB8888', 'RGB888', 'XRGB8888', 'RGB565A8', 'ARGB8565',
+    'RGB565', 'RGB565_SWAPPED', 'ARGB8888_PREMULTIPLIED',
+  ]);
+  const PREMULTIPLY_SUPPORTED = new Set(['ARGB8888', 'RGB565A8', 'ARGB8565', 'I8', 'I4', 'I2', 'I1']);
+  const BACKGROUND_USED = new Set(['RGB888', 'XRGB8888', 'RGB565', 'RGB565_SWAPPED', 'L8']);
+  const DITHER_SUPPORTED = new Set(['RGB565', 'RGB565_SWAPPED', 'RGB565A8', 'ARGB8565']);
+
+  for (const key of Object.keys(CF)) {
+    const cf = CF[key];
+    cf.ncolors = cf.ncolors || 0;
+    cf.isIndexed = cf.ncolors > 0;
+    cf.isAlphaOnly = ALPHA_ONLY.has(key);
+    cf.isColormap = COLORMAP.has(key);
+    cf.isLumaOnly = key === 'L8';
+    cf.hasAlpha = cf.isAlphaOnly || cf.isIndexed || HAS_ALPHA_EXTRA.has(key);
+    cf.premultiplySupported = PREMULTIPLY_SUPPORTED.has(key);
+    cf.usesBackground = BACKGROUND_USED.has(key);
+    cf.ditherSupported = DITHER_SUPPORTED.has(key);
+  }
+
+  // ---------- Small byte helpers ----------
+  function u16le(v) { return [v & 0xff, (v >> 8) & 0xff]; }
+  function u32le(v) {
+    return [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >>> 24) & 0xff];
+  }
+
+  function concatBytes(chunks) {
+    let len = 0;
+    for (const c of chunks) len += c.length;
+    const out = new Uint8Array(len);
+    let off = 0;
+    for (const c of chunks) { out.set(c, off); off += c.length; }
+    return out;
+  }
+
+  // ---------- background premultiply (matches color_pre_multiply in .py) ----------
+  function colorPreMultiply(r, g, b, a, background) {
+    const bb = background & 0xff;
+    const bg = (background >> 8) & 0xff;
+    const br = (background >> 16) & 0xff;
+    return [
+      (r * a + (255 - a) * br) >> 8,
+      (g * a + (255 - a) * bg) >> 8,
+      (b * a + (255 - a) * bb) >> 8,
+      a,
+    ];
+  }
+
+  function sRGBToLinear(x) {
+    if (x < 0.04045) return x / 12.92;
+    return Math.pow((x + 0.055) / 1.055, 2.4);
+  }
+  function linearToSRGB(y) {
+    if (y <= 0.0031308) return 12.92 * y;
+    return 1.055 * Math.pow(y, 1 / 2.4) - 0.055;
+  }
+
+  // ordered-dither threshold tables, verbatim from LVGLImage.py
+  const RED_THRESH = [
+    1, 7, 3, 5, 0, 8, 2, 6, 7, 1, 5, 3, 8, 0, 6, 2, 3, 5, 0, 8, 2, 6, 1, 7,
+    5, 3, 8, 0, 6, 2, 7, 1, 0, 8, 2, 6, 1, 7, 3, 5, 8, 0, 6, 2, 7, 1, 5, 3,
+    2, 6, 1, 7, 3, 5, 0, 8, 6, 2, 7, 1, 5, 3, 8, 0,
+  ];
+  const GREEN_THRESH = [
+    1, 3, 2, 2, 3, 1, 2, 2, 2, 2, 0, 4, 2, 2, 4, 0, 3, 1, 2, 2, 1, 3, 2, 2,
+    2, 2, 4, 0, 2, 2, 0, 4, 1, 3, 2, 2, 3, 1, 2, 2, 2, 2, 0, 4, 2, 2, 4, 0,
+    3, 1, 2, 2, 1, 3, 2, 2, 2, 2, 4, 0, 2, 2, 0, 4,
+  ];
+  const BLUE_THRESH = [
+    5, 3, 8, 0, 6, 2, 7, 1, 3, 5, 0, 8, 2, 6, 1, 7, 8, 0, 6, 2, 7, 1, 5, 3,
+    0, 8, 2, 6, 1, 7, 3, 5, 6, 2, 7, 1, 5, 3, 8, 0, 2, 6, 1, 7, 3, 5, 0, 8,
+    7, 1, 5, 3, 8, 0, 6, 2, 1, 7, 3, 5, 0, 8, 2, 6,
+  ];
+
+  // ---------- bit-level row packer (matches png.pack_rows semantics used by the .py) ----------
+  // Packs `values` (bpp-wide ints, MSB-first within each byte) into a tight row.
+  function packRow(values, bpp) {
+    const perByte = 8 / bpp;
+    const outLen = Math.ceil(values.length / perByte);
+    const out = new Uint8Array(outLen);
+    const mask = (1 << bpp) - 1;
+    for (let i = 0; i < values.length; i++) {
+      const byteIdx = Math.floor(i / perByte);
+      const posInByte = i % perByte;
+      const shift = 8 - bpp - posInByte * bpp;
+      out[byteIdx] |= (values[i] & mask) << shift;
+    }
+    return out;
+  }
+
+  function strideDefault(w, bpp) {
+    return Math.floor((w * bpp + 7) / 8);
+  }
+  function strideAlign(stride, align) {
+    if (align <= 1) return stride;
+    return Math.ceil(stride / align) * align;
+  }
+
+  // Re-pad/trim an array of tightly-packed rows (align=1) to a new stride.
+  function reStride(rows, newStride) {
+    return rows.map((row) => {
+      if (newStride === row.length) return row;
+      if (newStride < row.length) return row.slice(0, newStride);
+      const padded = new Uint8Array(newStride);
+      padded.set(row);
+      return padded;
+    });
+  }
+
+  // ---------- palette (median-cut) quantizer, used when a PNG has more unique ----------
+  // colors than the target indexed format can hold. Exact match is used whenever
+  // the image already fits (very common for LVGL icon/UI assets).
+  function collectColors(rgba, w, h) {
+    const map = new Map();
+    for (let i = 0; i < w * h; i++) {
+      const o = i * 4;
+      const key = (rgba[o] << 24) | (rgba[o + 1] << 16) | (rgba[o + 2] << 8) | rgba[o + 3];
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+    const out = [];
+    for (const [key, count] of map) {
+      out.push([
+        (key >>> 24) & 0xff,
+        (key >>> 16) & 0xff,
+        (key >>> 8) & 0xff,
+        key & 0xff,
+        count,
+      ]);
+    }
+    return out;
+  }
+
+  function medianCutPalette(colors, n) {
+    let buckets = [colors.slice()];
+    while (buckets.length < n) {
+      let biggestIdx = -1;
+      let biggestRange = -1;
+      let biggestChannel = 0;
+      for (let bi = 0; bi < buckets.length; bi++) {
+        const bucket = buckets[bi];
+        if (bucket.length < 2) continue;
+        for (let c = 0; c < 4; c++) {
+          let mn = 255, mx = 0;
+          for (const p of bucket) { if (p[c] < mn) mn = p[c]; if (p[c] > mx) mx = p[c]; }
+          const range = mx - mn;
+          if (range > biggestRange) { biggestRange = range; biggestIdx = bi; biggestChannel = c; }
+        }
+      }
+      if (biggestIdx === -1) break; // nothing left splittable
+      const bucket = buckets.splice(biggestIdx, 1)[0];
+      bucket.sort((a, b) => a[biggestChannel] - b[biggestChannel]);
+      const mid = Math.floor(bucket.length / 2);
+      buckets.push(bucket.slice(0, mid), bucket.slice(mid));
+    }
+    return buckets.map((bucket) => {
+      const sum = [0, 0, 0, 0];
+      let total = 0;
+      for (const p of bucket) {
+        const w = p[4];
+        sum[0] += p[0] * w; sum[1] += p[1] * w; sum[2] += p[2] * w; sum[3] += p[3] * w;
+        total += w;
+      }
+      return [
+        Math.round(sum[0] / total),
+        Math.round(sum[1] / total),
+        Math.round(sum[2] / total),
+        Math.round(sum[3] / total),
+      ];
+    });
+  }
+
+  function buildPalette(rgba, w, h, ncolors) {
+    const colors = collectColors(rgba, w, h);
+    let palette;
+    let exact = colors.length <= ncolors;
+    if (exact) {
+      palette = colors.map((c) => [c[0], c[1], c[2], c[3]]);
+      while (palette.length < ncolors) palette.push([255, 255, 255, 0]);
+    } else {
+      palette = medianCutPalette(colors, ncolors);
+    }
+    return { palette, exact };
+  }
+
+  function nearestIndex(palette, r, g, b, a, cache) {
+    const key = (r << 24) | (g << 16) | (b << 8) | a;
+    const cached = cache.get(key);
+    if (cached !== undefined) return cached;
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < palette.length; i++) {
+      const p = palette[i];
+      const dr = p[0] - r, dg = p[1] - g, db = p[2] - b, da = p[3] - a;
+      const dist = dr * dr + dg * dg + db * db + da * da * 2; // weight alpha a bit more
+      if (dist < bestDist) { bestDist = dist; best = i; }
+    }
+    cache.set(key, best);
+    return best;
+  }
+
+  // ---------- main encode ----------
+  // opts: { cf, w, h, rgba(Uint8ClampedArray/Uint8Array, RGBA8888 row-major),
+  //         background(0xRRGGBB), dither(bool), premultiply(bool), align(int) }
+  function encode(opts) {
+    const cf = opts.cf;
+    const { w, h, rgba } = opts;
+    const background = opts.background != null ? opts.background : 0x000000;
+    const dither = !!opts.dither && cf.ditherSupported;
+    const align = opts.align && opts.align > 0 ? opts.align : 1;
+
+    let paletteBytes = new Uint8Array(0);
+    let colorRows = []; // tightly packed (align=1) rows, one Uint8Array per image row
+    let alphaRows = null; // only used for RGB565A8
+    let premultiplied = false;
+
+    if (cf.isIndexed) {
+      const { palette } = buildPalette(rgba, w, h, cf.ncolors);
+      const cache = new Map();
+      const idxRows = [];
+      for (let y = 0; y < h; y++) {
+        const vals = new Array(w);
+        for (let x = 0; x < w; x++) {
+          const o = (y * w + x) * 4;
+          vals[x] = nearestIndex(palette, rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3], cache);
+        }
+        idxRows.push(vals);
+      }
+      colorRows = idxRows.map((vals) => packRow(vals, cf.bpp));
+      // palette stored as B,G,R,A per entry (little-endian of (a<<24|r<<16|g<<8|b))
+      const pbytes = new Uint8Array(cf.ncolors * 4);
+      for (let i = 0; i < cf.ncolors; i++) {
+        const [r, g, b, a] = palette[i] || [255, 255, 255, 0];
+        pbytes[i * 4 + 0] = b; pbytes[i * 4 + 1] = g; pbytes[i * 4 + 2] = r; pbytes[i * 4 + 3] = a;
+      }
+      paletteBytes = pbytes;
+
+      if (opts.premultiply && cf.premultiplySupported) {
+        for (let i = 0; i < cf.ncolors; i++) {
+          const b0 = paletteBytes[i * 4 + 0], g0 = paletteBytes[i * 4 + 1];
+          const r0 = paletteBytes[i * 4 + 2], a0 = paletteBytes[i * 4 + 3];
+          paletteBytes[i * 4 + 0] = (b0 * a0) >> 8;
+          paletteBytes[i * 4 + 1] = (g0 * a0) >> 8;
+          paletteBytes[i * 4 + 2] = (r0 * a0) >> 8;
+        }
+        premultiplied = true;
+      }
+    } else if (cf.isAlphaOnly) {
+      const shift = 8 - cf.bpp;
+      for (let y = 0; y < h; y++) {
+        const vals = new Array(w);
+        for (let x = 0; x < w; x++) {
+          const a = rgba[(y * w + x) * 4 + 3];
+          vals[x] = cf.bpp === 8 ? a : (a >> shift);
+        }
+        colorRows.push(packRow(vals, cf.bpp));
+      }
+    } else if (cf.name === 'AL88') {
+      for (let y = 0; y < h; y++) {
+        const row = new Uint8Array(w * 2);
+        for (let x = 0; x < w; x++) {
+          const o = (y * w + x) * 4;
+          const r = rgba[o], g = rgba[o + 1], b = rgba[o + 2], a = rgba[o + 3];
+          const rl = sRGBToLinear(r / 255), gl = sRGBToLinear(g / 255), bl = sRGBToLinear(b / 255);
+          const luma = 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+          const lumaByte = Math.floor(linearToSRGB(luma) * 255);
+          row[x * 2] = lumaByte;
+          row[x * 2 + 1] = a;
+        }
+        colorRows.push(row);
+      }
+    } else if (cf.isLumaOnly) {
+      for (let y = 0; y < h; y++) {
+        const row = new Uint8Array(w);
+        for (let x = 0; x < w; x++) {
+          const o = (y * w + x) * 4;
+          let [r, g, b, a] = colorPreMultiply(rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3], background);
+          const rl = sRGBToLinear(r / 255), gl = sRGBToLinear(g / 255), bl = sRGBToLinear(b / 255);
+          const luma = 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+          row[x] = Math.floor(linearToSRGB(luma) * 255);
+        }
+        colorRows.push(row);
+      }
+    } else if (cf.isColormap) {
+      const bytesPerPixel = cf.bpp / 8;
+      if (cf.name === 'RGB565A8') alphaRows = [];
+      for (let y = 0; y < h; y++) {
+        const row = new Uint8Array(w * bytesPerPixel);
+        const aRow = alphaRows ? new Uint8Array(w) : null;
+        for (let x = 0; x < w; x++) {
+          const o = (y * w + x) * 4;
+          let r = rgba[o], g = rgba[o + 1], b = rgba[o + 2], a = rgba[o + 3];
+
+          if (dither) {
+            const tid = ((y & 7) << 3) + (x & 7);
+            r = Math.min(r + RED_THRESH[tid], 0xff) & 0xf8;
+            g = Math.min(g + GREEN_THRESH[tid], 0xff) & 0xfc;
+            b = Math.min(b + BLUE_THRESH[tid], 0xff) & 0xf8;
+          }
+
+          let bytes;
+          switch (cf.name) {
+            case 'ARGB8888': {
+              bytes = [b, g, r, a];
+              break;
+            }
+            case 'ARGB8888_PREMULTIPLIED': {
+              const rp = Math.floor((r * a) / 255), gp = Math.floor((g * a) / 255), bp = Math.floor((b * a) / 255);
+              bytes = [bp, gp, rp, a];
+              break;
+            }
+            case 'XRGB8888': {
+              const pm = colorPreMultiply(r, g, b, a, background);
+              bytes = [pm[2], pm[1], pm[0], 0xff];
+              break;
+            }
+            case 'RGB888': {
+              const pm = colorPreMultiply(r, g, b, a, background);
+              bytes = [pm[2], pm[1], pm[0]];
+              break;
+            }
+            case 'RGB565': {
+              const pm = colorPreMultiply(r, g, b, a, background);
+              const color = ((pm[0] >> 3) << 11) | ((pm[1] >> 2) << 5) | (pm[2] >> 3);
+              bytes = [color & 0xff, (color >> 8) & 0xff];
+              break;
+            }
+            case 'RGB565_SWAPPED': {
+              const pm = colorPreMultiply(r, g, b, a, background);
+              const color = ((pm[0] >> 3) << 11) | ((pm[1] >> 2) << 5) | (pm[2] >> 3);
+              bytes = [(color >> 8) & 0xff, color & 0xff];
+              break;
+            }
+            case 'RGB565A8': {
+              const color = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+              bytes = [color & 0xff, (color >> 8) & 0xff];
+              aRow[x] = a;
+              break;
+            }
+            case 'ARGB8565': {
+              const color = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+              bytes = [color & 0xff, (color >> 8) & 0xff, a];
+              break;
+            }
+            default:
+              throw new Error('unhandled colormap format: ' + cf.name);
+          }
+          row.set(bytes, x * bytesPerPixel);
+        }
+        colorRows.push(row);
+        if (aRow) alphaRows.push(aRow);
+      }
+
+      if (opts.premultiply && cf.premultiplySupported && (cf.name === 'ARGB8888' || cf.name === 'RGB565A8' || cf.name === 'ARGB8565')) {
+        premultiplyColormapRows(cf, colorRows, alphaRows, w);
+        premultiplied = true;
+      }
+    } else {
+      throw new Error('unhandled format: ' + cf.name);
+    }
+
+    // ----- stride alignment -----
+    const stride = strideAlign(strideDefault(w, cf.bpp), align);
+    colorRows = reStride(colorRows, stride);
+    let alphaBytes = new Uint8Array(0);
+    if (alphaRows) {
+      const alphaStride = Math.floor(stride / 2);
+      alphaRows = reStride(alphaRows, alphaStride);
+      alphaBytes = concatBytes(alphaRows);
+    }
+
+    const data = concatBytes([paletteBytes, ...colorRows, alphaBytes]);
+    return { cf, w, h, stride, data, premultiplied };
+  }
+
+  function premultiplyColormapRows(cf, colorRows, alphaRows, w) {
+    if (cf.name === 'ARGB8888') {
+      for (const row of colorRows) {
+        for (let x = 0; x < w; x++) {
+          const o = x * 4;
+          const b = row[o], g = row[o + 1], r = row[o + 2], a = row[o + 3];
+          row[o] = (b * a) >> 8; row[o + 1] = (g * a) >> 8; row[o + 2] = (r * a) >> 8;
+        }
+      }
+    } else if (cf.name === 'RGB565A8') {
+      for (let y = 0; y < colorRows.length; y++) {
+        const row = colorRows[y];
+        const aRow = alphaRows[y];
+        for (let x = 0; x < w; x++) {
+          const o = x * 2;
+          const color = row[o] | (row[o + 1] << 8);
+          const r = (color >> 11) & 0x1f, g = (color >> 5) & 0x3f, b = color & 0x1f;
+          const a = aRow[x];
+          const r2 = Math.floor((r * a) / 255), g2 = Math.floor((g * a) / 255), b2 = Math.floor((b * a) / 255);
+          const c2 = (r2 << 11) | (g2 << 5) | b2;
+          row[o] = c2 & 0xff; row[o + 1] = (c2 >> 8) & 0xff;
+        }
+      }
+    } else if (cf.name === 'ARGB8565') {
+      for (const row of colorRows) {
+        for (let x = 0; x < w; x++) {
+          const o = x * 3;
+          const color = row[o] | (row[o + 1] << 8);
+          const a = row[o + 2];
+          const r = (color >> 11) & 0x1f, g = (color >> 5) & 0x3f, b = color & 0x1f;
+          const r2 = Math.floor((r * a) / 255), g2 = Math.floor((g * a) / 255), b2 = Math.floor((b * a) / 255);
+          const c2 = (r2 << 11) | (g2 << 5) | b2;
+          row[o] = c2 & 0xff; row[o + 1] = (c2 >> 8) & 0xff;
+        }
+      }
+    }
+  }
+
+  // ---------- header ----------
+  function buildHeader(cf, flags, w, h, stride) {
+    return new Uint8Array([
+      0x19, cf.value & 0xff, ...u16le(flags), ...u16le(w), ...u16le(h), ...u16le(stride), ...u16le(0),
+    ]);
+  }
+
+  // ---------- RLE compression (matches RLEImage.rle_compress in the .py, threshold=16) ----------
+  function rleCompress(data, blksize) {
+    const THRESHOLD = 16;
+    const out = [];
+    let index = 0;
+    const n = data.length;
+
+    function getRepeatCount(off) {
+      if (n - off < blksize) return 0;
+      let count = 0;
+      const start = data.subarray(off, off + blksize);
+      let i = off;
+      while (i < n) {
+        const cand = data.subarray(i, i + blksize);
+        if (cand.length < blksize || !sameBytes(cand, start)) break;
+        count++;
+        if (count === 127) break;
+        i += blksize;
+      }
+      return count;
+    }
+
+    function getNonrepeatCount(off) {
+      if (n - off < blksize) return 0;
+      let preValue = data.subarray(off, off + blksize);
+      let index2 = off;
+      let nonrepeatCount = 0;
+      let repeatCnt = 0;
+      for (;;) {
+        const value = data.subarray(index2, index2 + blksize);
+        if (value.length === blksize && sameBytes(value, preValue)) {
+          repeatCnt++;
+          if (repeatCnt > THRESHOLD) break;
+        } else {
+          preValue = value;
+          nonrepeatCount += 1 + repeatCnt;
+          repeatCnt = 0;
+          if (nonrepeatCount >= 127) { nonrepeatCount = 127; break; }
+        }
+        index2 += blksize;
+        if (index2 >= n) { nonrepeatCount += repeatCnt; break; }
+      }
+      return nonrepeatCount;
+    }
+
+    function sameBytes(a, b) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+      return true;
+    }
+
+    while (index < n) {
+      const repeatCnt = getRepeatCount(index);
+      if (repeatCnt === 0) break;
+      if (repeatCnt < THRESHOLD) {
+        const nonrepeatCnt = getNonrepeatCount(index);
+        out.push(new Uint8Array([nonrepeatCnt | 0x80]));
+        out.push(data.subarray(index, index + nonrepeatCnt * blksize));
+        index += nonrepeatCnt * blksize;
+      } else {
+        out.push(new Uint8Array([repeatCnt]));
+        out.push(data.subarray(index, index + blksize));
+        index += repeatCnt * blksize;
+      }
+    }
+    return concatBytes(out);
+  }
+
+  function wrapCompressed(method, blksize, rawData) {
+    let padded = rawData;
+    if (rawData.length % blksize !== 0) {
+      const pad = new Uint8Array(blksize - (rawData.length % blksize));
+      padded = concatBytes([rawData, pad]);
+    }
+    let compressed;
+    let methodValue;
+    if (method === 'RLE') {
+      compressed = rleCompress(padded, blksize);
+      methodValue = 1;
+    } else {
+      throw new Error('unsupported compression: ' + method);
+    }
+    return concatBytes([
+      new Uint8Array(u32le(methodValue)),
+      new Uint8Array(u32le(compressed.length)),
+      new Uint8Array(u32le(rawData.length)),
+      compressed,
+    ]);
+  }
+
+  // ---------- top-level: build the full .bin file ----------
+  function toBin(encoded, compress, premultiplied) {
+    let flags = 0;
+    if (compress !== 'NONE') flags |= 0x08;
+    if (premultiplied) flags |= 0x01;
+    const header = buildHeader(encoded.cf, flags, encoded.w, encoded.h, encoded.stride);
+    let body = encoded.data;
+    if (compress !== 'NONE') {
+      const blksize = Math.ceil(encoded.cf.bpp / 8);
+      body = wrapCompressed(compress, blksize, encoded.data);
+    }
+    return concatBytes([header, body]);
+  }
+
+  // ---------- top-level: build the .c source ----------
+  function toCArray(encoded, compress, premultiplied, varName) {
+    const cf = encoded.cf;
+    let flagsStr = '0';
+    if (compress !== 'NONE') flagsStr += ' | LV_IMAGE_FLAGS_COMPRESSED';
+    if (premultiplied) flagsStr += ' | LV_IMAGE_FLAGS_PREMULTIPLIED';
+
+    let data = encoded.data;
+    if (compress !== 'NONE') {
+      const blksize = Math.ceil(cf.bpp / 8);
+      data = wrapCompressed(compress, blksize, encoded.data);
+    }
+
+    const macro = 'LV_ATTRIBUTE_' + varName.toUpperCase();
+    let out = '';
+    out += `\n#if defined(LV_LVGL_H_INCLUDE_SIMPLE)\n#include "lvgl.h"\n#elif defined(LV_LVGL_H_INCLUDE_SYSTEM)\n#include <lvgl.h>\n#elif defined(LV_BUILD_TEST)\n#include "../lvgl.h"\n#else\n#include "lvgl/lvgl.h"\n#endif\n\n#ifndef LV_ATTRIBUTE_MEM_ALIGN\n#define LV_ATTRIBUTE_MEM_ALIGN\n#endif\n\n#ifndef ${macro}\n#define ${macro}\n#endif\n\nstatic const\nLV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST ${macro}\nuint8_t ${varName}_map[] = {\n`;
+
+    function writeBinary(bytes, stride) {
+      const s = stride === 0 ? 16 : stride;
+      let s2 = '';
+      for (let i = 0; i < bytes.length; i++) {
+        if (i % s === 0) s2 += '\n    ';
+        s2 += '0x' + bytes[i].toString(16).padStart(2, '0') + ',';
+      }
+      s2 += '\n';
+      return s2;
+    }
+
+    if (compress !== 'NONE') {
+      out += writeBinary(data, 16);
+    } else {
+      const ncolors = cf.ncolors;
+      if (ncolors) out += writeBinary(data.subarray(0, ncolors * 4), 16);
+      out += writeBinary(data.subarray(ncolors * 4), encoded.stride);
+    }
+
+    out += `};\n\nconst lv_image_dsc_t ${varName} = {\n  .header = {\n    .magic = LV_IMAGE_HEADER_MAGIC,\n    .cf = LV_COLOR_FORMAT_${cf.name},\n    .flags = ${flagsStr},\n    .w = ${encoded.w},\n    .h = ${encoded.h},\n    .stride = ${encoded.stride},\n    .reserved_2 = 0,\n  },\n  .data_size = sizeof(${varName}_map),\n  .data = ${varName}_map,\n  .reserved = NULL,\n};\n`;
+
+    return out;
+  }
+
+  // ---------- decode packed data back to RGBA, for on-screen preview + pixel inspector ----------
+  function bitExtend(value, bpp) {
+    if (value === 0) return 0;
+    let res = value, bppNow = bpp;
+    while (bppNow < 8) { res |= value << (8 - bppNow); bppNow += bpp; }
+    return res & 0xff;
+  }
+
+  function unpackRow(rowBytes, bpp, w) {
+    const out = new Array(w);
+    if (bpp === 8) {
+      for (let i = 0; i < w; i++) out[i] = rowBytes[i];
+      return out;
+    }
+    const perByte = 8 / bpp;
+    const mask = (1 << bpp) - 1;
+    for (let i = 0; i < w; i++) {
+      const byteIdx = Math.floor(i / perByte);
+      const posInByte = i % perByte;
+      const shift = 8 - bpp - posInByte * bpp;
+      out[i] = (rowBytes[byteIdx] >> shift) & mask;
+    }
+    return out;
+  }
+
+  function decodePreview(encoded) {
+    const { cf, w, h, stride, data } = encoded;
+    const rgba = new Uint8ClampedArray(w * h * 4);
+
+    if (cf.isIndexed) {
+      const palette = [];
+      for (let i = 0; i < cf.ncolors; i++) {
+        const o = i * 4;
+        palette.push([data[o + 2], data[o + 1], data[o], data[o + 3]]); // stored B,G,R,A
+      }
+      const body = data.subarray(cf.ncolors * 4);
+      for (let y = 0; y < h; y++) {
+        const row = body.subarray(y * stride, y * stride + stride);
+        const idxs = unpackRow(row, cf.bpp, w);
+        for (let x = 0; x < w; x++) {
+          const p = palette[idxs[x]] || [255, 255, 255, 0];
+          const o = (y * w + x) * 4;
+          rgba[o] = p[0]; rgba[o + 1] = p[1]; rgba[o + 2] = p[2]; rgba[o + 3] = p[3];
+        }
+      }
+    } else if (cf.isAlphaOnly) {
+      const shift = 8 - cf.bpp;
+      for (let y = 0; y < h; y++) {
+        const row = data.subarray(y * stride, y * stride + stride);
+        const vals = unpackRow(row, cf.bpp, w);
+        for (let x = 0; x < w; x++) {
+          const a = cf.bpp === 8 ? vals[x] : bitExtend(vals[x], cf.bpp);
+          const o = (y * w + x) * 4;
+          rgba[o] = 0; rgba[o + 1] = 0; rgba[o + 2] = 0; rgba[o + 3] = a;
+        }
+      }
+    } else if (cf.name === 'AL88') {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const o = y * stride + x * 2;
+          const l = data[o], a = data[o + 1];
+          const oo = (y * w + x) * 4;
+          rgba[oo] = l; rgba[oo + 1] = l; rgba[oo + 2] = l; rgba[oo + 3] = a;
+        }
+      }
+    } else if (cf.isLumaOnly) {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const l = data[y * stride + x];
+          const o = (y * w + x) * 4;
+          rgba[o] = l; rgba[o + 1] = l; rgba[o + 2] = l; rgba[o + 3] = 255;
+        }
+      }
+    } else if (cf.isColormap) {
+      const bytesPerPixel = cf.bpp / 8;
+      let alphaBase = 0, alphaStride = 0;
+      if (cf.name === 'RGB565A8') {
+        alphaStride = Math.floor(stride / 2);
+        alphaBase = stride * h;
+      }
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const o = y * stride + x * bytesPerPixel;
+          const oo = (y * w + x) * 4;
+          let r, g, b, a = 255;
+          switch (cf.name) {
+            case 'RGB888': {
+              b = data[o]; g = data[o + 1]; r = data[o + 2];
+              break;
+            }
+            case 'XRGB8888': {
+              b = data[o]; g = data[o + 1]; r = data[o + 2]; a = 255;
+              break;
+            }
+            case 'ARGB8888':
+            case 'ARGB8888_PREMULTIPLIED': {
+              b = data[o]; g = data[o + 1]; r = data[o + 2]; a = data[o + 3];
+              break;
+            }
+            case 'RGB565': {
+              const c = data[o] | (data[o + 1] << 8);
+              r = bitExtend((c >> 11) & 0x1f, 5); g = bitExtend((c >> 5) & 0x3f, 6); b = bitExtend(c & 0x1f, 5);
+              break;
+            }
+            case 'RGB565_SWAPPED': {
+              const c = data[o + 1] | (data[o] << 8);
+              r = bitExtend((c >> 11) & 0x1f, 5); g = bitExtend((c >> 5) & 0x3f, 6); b = bitExtend(c & 0x1f, 5);
+              break;
+            }
+            case 'ARGB8565': {
+              const c = data[o] | (data[o + 1] << 8);
+              r = bitExtend((c >> 11) & 0x1f, 5); g = bitExtend((c >> 5) & 0x3f, 6); b = bitExtend(c & 0x1f, 5);
+              a = data[o + 2];
+              break;
+            }
+            case 'RGB565A8': {
+              const c = data[o] | (data[o + 1] << 8);
+              r = bitExtend((c >> 11) & 0x1f, 5); g = bitExtend((c >> 5) & 0x3f, 6); b = bitExtend(c & 0x1f, 5);
+              a = data[alphaBase + y * alphaStride + x];
+              break;
+            }
+            default:
+              r = g = b = 0;
+          }
+          rgba[oo] = r; rgba[oo + 1] = g; rgba[oo + 2] = b; rgba[oo + 3] = a;
+        }
+      }
+    }
+
+    return { w, h, rgba };
+  }
+
+  // Describe the bit layout of one packed pixel/unit for the inspector UI.
+  function bitLayout(cf) {
+    switch (cf.name) {
+      case 'RGB565': case 'RGB565_SWAPPED': return 'RRRRR GGGGGG BBBBB  (16 bit)';
+      case 'RGB565A8': return 'RRRRR GGGGGG BBBBB (color plane) + AAAAAAAA (separate alpha plane)';
+      case 'ARGB8565': return 'RRRRR GGGGGG BBBBB + AAAAAAAA  (24 bit)';
+      case 'RGB888': return 'BBBBBBBB GGGGGGGG RRRRRRRR  (24 bit, byte order B,G,R)';
+      case 'XRGB8888': return 'BBBBBBBB GGGGGGGG RRRRRRRR 11111111  (32 bit, alpha forced 0xFF)';
+      case 'ARGB8888': case 'ARGB8888_PREMULTIPLIED': return 'BBBBBBBB GGGGGGGG RRRRRRRR AAAAAAAA  (32 bit)';
+      case 'L8': return 'LLLLLLLL  (8 bit luminance)';
+      case 'AL88': return 'LLLLLLLL AAAAAAAA  (16 bit)';
+      case 'A1': return 'A  (1 bit, packed 8/byte)';
+      case 'A2': return 'AA  (2 bit, packed 4/byte)';
+      case 'A4': return 'AAAA  (4 bit, packed 2/byte)';
+      case 'A8': return 'AAAAAAAA  (8 bit)';
+      case 'I1': return '1 bit palette index (2 colors), packed 8/byte';
+      case 'I2': return '2 bit palette index (4 colors), packed 4/byte';
+      case 'I4': return '4 bit palette index (16 colors), packed 2/byte';
+      case 'I8': return '8 bit palette index (256 colors)';
+      default: return '';
+    }
+  }
+
+  const LVGLCore = {
+    CF, encode, toBin, toCArray, buildHeader, rleCompress, wrapCompressed,
+    strideDefault, strideAlign, colorPreMultiply, u16le, u32le, concatBytes,
+    decodePreview, bitLayout, bitExtend,
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = LVGLCore;
+  } else {
+    root.LVGLCore = LVGLCore;
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  'use strict';
+  const CF = LVGLCore.CF;
+
+  const FORMAT_NOTES = {
+    RGB565: 'No alpha channel — transparent pixels are blended onto the background color below.',
+    RGB565_SWAPPED: 'Same as RGB565 with the two bytes swapped (some SPI displays expect this).',
+    RGB888: 'No alpha channel — transparent pixels are blended onto the background color below.',
+    XRGB8888: 'Alpha byte is always written as 0xFF — transparent pixels are blended onto the background.',
+    ARGB8888: 'Full 8-bit alpha, most common choice for icons and photos with transparency.',
+    ARGB8888_PREMULTIPLIED: 'RGB channels are multiplied by alpha ahead of time — matches LVGL\u2019s premultiplied blending path.',
+    ARGB8565: '24-bit: RGB565 color plus a full 8-bit alpha byte per pixel.',
+    RGB565A8: 'Color and alpha are stored as two separate planes back-to-back — common for masked icons.',
+    I1: 'Palette limited to 2 colors — best for pure 1-bit line art or masks.',
+    I2: 'Palette limited to 4 colors.',
+    I4: 'Palette limited to 16 colors — good for simple flat-color icons.',
+    I8: 'Palette limited to 256 colors — good for most flat-color UI art.',
+    A1: 'Stores only a 1-bit transparency mask (no color) — pair with a solid recolor in LVGL.',
+    A2: 'Stores only a 2-bit transparency mask (no color).',
+    A4: 'Stores only a 4-bit transparency mask (no color).',
+    A8: 'Stores only an 8-bit transparency mask (no color).',
+    L8: 'Grayscale, no alpha — transparent pixels are blended onto the background color below.',
+    AL88: 'Grayscale with a full 8-bit alpha channel.',
+  };
+
+  // ---------- state ----------
+  let sourceImage = null; // { w, h, rgba: Uint8ClampedArray }
+  let sourceFileName = '';
+  let lastEncoded = null; // result of LVGLCore.encode
+  let lastCompress = 'NONE';
+  let lastPremultiplied = false;
+  let lastVarName = 'image';
+  let lastPaletteExact = true;
+  let lastUniqueColorCount = 0;
+
+  // ---------- element refs ----------
+  const $ = (id) => document.getElementById(id);
+  const dropZone = $('dropZone');
+  const fileInput = $('fileInput');
+  const srcStage = $('srcStage');
+  const srcMeta = $('srcMeta');
+  const srcDims = $('srcDims');
+  const srcFileNameEl = $('srcFileName');
+
+  const cfSelect = $('cfSelect');
+  const cfDesc = $('cfDesc');
+  const bgField = $('bgField');
+  const bgColor = $('bgColor');
+  const bgColorText = $('bgColorText');
+  const alignInput = $('alignInput');
+  const ditherRow = $('ditherRow');
+  const ditherCheck = $('ditherCheck');
+  const premultRow = $('premultRow');
+  const premultCheck = $('premultCheck');
+  const compressSelect = $('compressSelect');
+  const nameInput = $('nameInput');
+  const convertBtn = $('convertBtn');
+
+  const outputSection = $('outputSection');
+  const outStage = $('outStage');
+  const statSize = $('statSize');
+  const statStride = $('statStride');
+  const statRatio = $('statRatio');
+  const downloadBinBtn = $('downloadBin');
+  const downloadCBtn = $('downloadC');
+  const copyCBtn = $('copyC');
+  const cCode = $('cCode');
+  const cSizeLabel = $('cSizeLabel');
+  const paletteNotice = $('paletteNotice');
+
+  const inspectorEmpty = $('inspectorEmpty');
+  const inspectorBody = $('inspectorBody');
+  const swatchFill = $('swatchFill');
+  const inspCoord = $('inspCoord');
+  const inspLayout = $('inspLayout');
+  const inspBytes = $('inspBytes');
+
+  // ---------- helpers ----------
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function hexColor(r, g, b) {
+    const h = (v) => v.toString(16).padStart(2, '0');
+    return '#' + h(r) + h(g) + h(b);
+  }
+
+  function parseHexColor(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return null;
+    return parseInt(m[1], 16);
+  }
+
+  function currentCF() { return CF[cfSelect.value]; }
+
+  function refreshFormatUI() {
+    const cf = currentCF();
+    cfDesc.textContent = FORMAT_NOTES[cf.name] || '';
+    bgField.style.display = cf.usesBackground ? '' : 'none';
+    ditherRow.classList.toggle('disabled', !cf.ditherSupported);
+    ditherCheck.disabled = !cf.ditherSupported;
+    if (!cf.ditherSupported) ditherCheck.checked = false;
+    premultRow.classList.toggle('disabled', !cf.premultiplySupported);
+    premultCheck.disabled = !cf.premultiplySupported;
+    if (!cf.premultiplySupported) premultCheck.checked = false;
+  }
+
+  function setStage(container, canvas) {
+    container.innerHTML = '';
+    container.classList.remove('empty');
+    container.appendChild(canvas);
+  }
+
+  function canvasFromRGBA(w, h, rgba) {
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(w, h);
+    imgData.data.set(rgba);
+    ctx.putImageData(imgData, 0, 0);
+    // scale up small images so they're visible
+    const scale = Math.max(1, Math.min(16, Math.floor(320 / Math.max(w, h))));
+    if (scale > 1) {
+      canvas.style.width = (w * scale) + 'px';
+      canvas.style.height = (h * scale) + 'px';
+    }
+    return canvas;
+  }
+
+  // ---------- file loading ----------
+  function loadFile(file) {
+    if (!file) return;
+    if (!/png$/i.test(file.type) && !/\.png$/i.test(file.name)) {
+      alert('Please choose a PNG file.');
+      return;
+    }
+    sourceFileName = file.name;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      sourceImage = { w: canvas.width, h: canvas.height, rgba: new Uint8ClampedArray(data.data) };
+      URL.revokeObjectURL(url);
+
+      setStage(srcStage, canvasFromRGBA(sourceImage.w, sourceImage.h, sourceImage.rgba));
+      srcMeta.style.display = 'flex';
+      srcDims.textContent = sourceImage.w + ' × ' + sourceImage.h;
+      srcFileNameEl.textContent = sourceFileName;
+      const base = sourceFileName.replace(/\.png$/i, '').replace(/[^a-zA-Z0-9_]/g, '_');
+      if (base) nameInput.value = base;
+
+      convertBtn.disabled = false;
+      convertBtn.textContent = 'Convert';
+      outputSection.style.display = 'none';
+      resetInspector();
+    };
+    img.onerror = () => {
+      alert('Could not load that PNG — the file may be corrupt.');
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+  ['dragenter', 'dragover'].forEach((evt) =>
+    dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.add('drag'); })
+  );
+  ['dragleave', 'drop'].forEach((evt) =>
+    dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.remove('drag'); })
+  );
+  dropZone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    loadFile(file);
+  });
+
+  // ---------- background color sync ----------
+  bgColor.addEventListener('input', () => { bgColorText.value = bgColor.value; });
+  bgColorText.addEventListener('change', () => {
+    const parsed = parseHexColor(bgColorText.value);
+    if (parsed !== null) bgColor.value = hexColor((parsed >> 16) & 0xff, (parsed >> 8) & 0xff, parsed & 0xff);
+    else bgColorText.value = bgColor.value;
+  });
+
+  cfSelect.addEventListener('change', refreshFormatUI);
+  refreshFormatUI();
+
+  // ---------- conversion ----------
+  convertBtn.addEventListener('click', () => {
+    if (!sourceImage) return;
+    const cf = currentCF();
+    const background = parseHexColor(bgColorText.value) || 0;
+    const align = Math.max(1, parseInt(alignInput.value, 10) || 1);
+    const dither = ditherCheck.checked && cf.ditherSupported;
+    const premultiply = premultCheck.checked && cf.premultiplySupported;
+    const compress = compressSelect.value;
+    const varName = (nameInput.value || 'image').replace(/[^a-zA-Z0-9_]/g, '_') || 'image';
+
+    let exact = true;
+    let uniqueColorCount = 0;
+    if (cf.isIndexed) {
+      const uniq = new Set();
+      const { w, h, rgba } = sourceImage;
+      for (let i = 0; i < w * h; i++) {
+        const o = i * 4;
+        uniq.add((rgba[o] << 24) | (rgba[o + 1] << 16) | (rgba[o + 2] << 8) | rgba[o + 3]);
+      }
+      uniqueColorCount = uniq.size;
+      exact = uniqueColorCount <= cf.ncolors;
+    }
+
+    const encoded = LVGLCore.encode({
+      cf, w: sourceImage.w, h: sourceImage.h, rgba: sourceImage.rgba,
+      background, dither, premultiply, align,
+    });
+
+    lastEncoded = encoded;
+    lastCompress = compress;
+    lastPremultiplied = encoded.premultiplied;
+    lastVarName = varName;
+    lastPaletteExact = exact;
+    lastUniqueColorCount = uniqueColorCount;
+
+    renderOutput();
+  });
+
+  function renderOutput() {
+    const encoded = lastEncoded;
+    const cf = encoded.cf;
+    const decoded = LVGLCore.decodePreview(encoded);
+    const canvas = canvasFromRGBA(decoded.w, decoded.h, decoded.rgba);
+    canvas.id = 'outCanvas';
+    setStage(outStage, canvas);
+    canvas.addEventListener('click', (e) => onPixelClick(e, canvas, decoded));
+
+    const bin = LVGLCore.toBin(encoded, lastCompress, lastPremultiplied);
+    const rawRGBA = encoded.w * encoded.h * 4;
+
+    statSize.textContent = fmtBytes(bin.length);
+    statStride.textContent = encoded.stride + ' B/row';
+    statRatio.textContent = ((bin.length / rawRGBA) * 100).toFixed(0) + '%';
+
+    const cText = LVGLCore.toCArray(encoded, lastCompress, lastPremultiplied, lastVarName);
+    cCode.textContent = cText.trim();
+    cSizeLabel.textContent = fmtBytes(new Blob([cText]).size);
+
+    if (cf.isIndexed && !lastPaletteExact) {
+      paletteNotice.style.display = 'block';
+      paletteNotice.textContent =
+        `Note: this image has more unique colors than ${cf.name}\u2019s ${cf.ncolors}-color palette allows, ` +
+        `so a new palette was generated in-browser (closest-color matching). For pixel-perfect palette control, ` +
+        `pre-quantize the PNG yourself (e.g. with pngquant) before uploading.`;
+    } else if (cf.isIndexed) {
+      paletteNotice.style.display = 'block';
+      paletteNotice.textContent =
+        `This image uses ${lastUniqueColorCount} unique color${lastUniqueColorCount === 1 ? '' : 's'}, ` +
+        `all of which fit within ${cf.name}\u2019s ${cf.ncolors}-color palette — lossless, exact palette match.`;
+    } else {
+      paletteNotice.style.display = 'none';
+    }
+
+    downloadBinBtn.onclick = () => downloadBlob(bin, lastVarName + '.bin', 'application/octet-stream');
+    downloadCBtn.onclick = () => downloadBlob(new TextEncoder().encode(cText), lastVarName + '.c', 'text/plain');
+    copyCBtn.onclick = () => {
+      navigator.clipboard.writeText(cText).then(() => {
+        const old = copyCBtn.textContent;
+        copyCBtn.textContent = 'Copied';
+        setTimeout(() => { copyCBtn.textContent = old; }, 1200);
+      });
+    };
+
+    outputSection.style.display = '';
+    resetInspector();
+    if (typeof outputSection.scrollIntoView === 'function') {
+      outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function downloadBlob(bytes, filename, mime) {
+    const blob = new Blob([bytes], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // ---------- pixel inspector ----------
+  function resetInspector() {
+    inspectorEmpty.style.display = '';
+    inspectorBody.style.display = 'none';
+  }
+
+  function onPixelClick(e, canvas, decoded) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = decoded.w / rect.width;
+    const scaleY = decoded.h / rect.height;
+    const x = Math.min(decoded.w - 1, Math.max(0, Math.floor((e.clientX - rect.left) * scaleX)));
+    const y = Math.min(decoded.h - 1, Math.max(0, Math.floor((e.clientY - rect.top) * scaleY)));
+
+    const o = (y * decoded.w + x) * 4;
+    const r = decoded.rgba[o], g = decoded.rgba[o + 1], b = decoded.rgba[o + 2], a = decoded.rgba[o + 3];
+
+    swatchFill.style.background = `rgba(${r},${g},${b},${a / 255})`;
+    inspCoord.textContent = `pixel (${x}, ${y}) — decoded RGBA ${r}, ${g}, ${b}, ${a}`;
+    inspLayout.textContent = LVGLCore.bitLayout(lastEncoded.cf);
+
+    inspBytes.innerHTML = '';
+    for (const chip of packedBytesForPixel(lastEncoded, x, y)) {
+      const el = document.createElement('div');
+      el.className = 'byte-chip';
+      el.innerHTML = `<span class="lbl">${chip.label}</span>0x${chip.value.toString(16).padStart(2, '0')}`;
+      inspBytes.appendChild(el);
+    }
+
+    inspectorEmpty.style.display = 'none';
+    inspectorBody.style.display = '';
+  }
+
+  function packedBytesForPixel(encoded, x, y) {
+    const cf = encoded.cf;
+    const { stride, data, w, h } = encoded;
+    const chips = [];
+    if (cf.isIndexed) {
+      const perByte = 8 / cf.bpp;
+      const rowStart = cf.ncolors * 4 + y * stride;
+      const byteIdx = Math.floor(x / perByte);
+      const posInByte = x % perByte;
+      const shift = 8 - cf.bpp - posInByte * cf.bpp;
+      const byte = data[rowStart + byteIdx];
+      const idx = (byte >> shift) & ((1 << cf.bpp) - 1);
+      chips.push({ label: 'index', value: idx });
+      const po = idx * 4;
+      chips.push({ label: 'pal B', value: data[po] });
+      chips.push({ label: 'pal G', value: data[po + 1] });
+      chips.push({ label: 'pal R', value: data[po + 2] });
+      chips.push({ label: 'pal A', value: data[po + 3] });
+    } else if (cf.isAlphaOnly) {
+      const perByte = 8 / cf.bpp;
+      const rowStart = y * stride;
+      const byteIdx = Math.floor(x / perByte);
+      chips.push({ label: 'byte', value: data[rowStart + byteIdx] });
+    } else {
+      const bytesPerPixel = cf.bpp / 8;
+      const o = y * stride + x * Math.floor(bytesPerPixel);
+      const n = Math.ceil(bytesPerPixel);
+      for (let i = 0; i < n; i++) chips.push({ label: 'B' + i, value: data[o + i] });
+      if (cf.name === 'RGB565A8') {
+        const alphaStride = Math.floor(stride / 2);
+        const alphaBase = stride * h;
+        chips.push({ label: 'alpha', value: data[alphaBase + y * alphaStride + x] });
+      }
+    }
+    return chips;
+  }
+})();
+
+</script>
+</body>
+</html>
