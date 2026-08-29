@@ -379,6 +379,23 @@
       <div class="panel-body">
 
         <div class="field">
+          <label>Output size (px)</label>
+          <div class="row2">
+            <input type="number" id="resizeWidth" min="1" step="1" placeholder="width">
+            <input type="number" id="resizeHeight" min="1" step="1" placeholder="height">
+          </div>
+          <label class="check" style="margin-top:6px;">
+            <input type="checkbox" id="lockAspectCheck" checked>
+            Lock aspect ratio
+          </label>
+          <label class="check" id="smoothRow">
+            <input type="checkbox" id="smoothResizeCheck" checked>
+            Smooth resample (uncheck for nearest-neighbor / pixel art)
+          </label>
+          <div class="hint">Defaults to the source image's size. Lower these to downscale before converting.</div>
+        </div>
+
+        <div class="field">
           <label for="cfSelect">Color format</label>
           <select id="cfSelect">
             <optgroup label="Colormap (RGB / ARGB)">
@@ -1313,6 +1330,11 @@
   const srcDims = $('srcDims');
   const srcFileNameEl = $('srcFileName');
 
+  const resizeWidthInput = $('resizeWidth');
+  const resizeHeightInput = $('resizeHeight');
+  const lockAspectCheck = $('lockAspectCheck');
+  const smoothResizeCheck = $('smoothResizeCheck');
+
   const cfSelect = $('cfSelect');
   const cfDesc = $('cfDesc');
   const bgField = $('bgField');
@@ -1400,6 +1422,30 @@
     return canvas;
   }
 
+  // ---------- resizing ----------
+  function rgbaToCanvas(w, h, rgba) {
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(w, h);
+    imgData.data.set(rgba);
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+  }
+
+  function resizeRGBA(src, targetW, targetH, smooth) {
+    if (targetW === src.w && targetH === src.h) return src;
+    const srcCanvas = rgbaToCanvas(src.w, src.h, src.rgba);
+    const dstCanvas = document.createElement('canvas');
+    dstCanvas.width = targetW; dstCanvas.height = targetH;
+    const ctx = dstCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = !!smooth;
+    if (smooth) ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+    const data = ctx.getImageData(0, 0, targetW, targetH);
+    return { w: targetW, h: targetH, rgba: new Uint8ClampedArray(data.data) };
+  }
+
   // ---------- file loading ----------
   function loadFile(file) {
     if (!file) return;
@@ -1426,6 +1472,9 @@
       srcFileNameEl.textContent = sourceFileName;
       const base = sourceFileName.replace(/\.png$/i, '').replace(/[^a-zA-Z0-9_]/g, '_');
       if (base) nameInput.value = base;
+
+      resizeWidthInput.value = sourceImage.w;
+      resizeHeightInput.value = sourceImage.h;
 
       convertBtn.disabled = false;
       convertBtn.textContent = 'Convert';
@@ -1466,6 +1515,24 @@
   cfSelect.addEventListener('change', refreshFormatUI);
   refreshFormatUI();
 
+  // ---------- output size sync ----------
+  resizeWidthInput.addEventListener('input', () => {
+    if (!sourceImage || !lockAspectCheck.checked) return;
+    const w = parseInt(resizeWidthInput.value, 10);
+    if (w > 0) {
+      const ratio = sourceImage.h / sourceImage.w;
+      resizeHeightInput.value = Math.max(1, Math.round(w * ratio));
+    }
+  });
+  resizeHeightInput.addEventListener('input', () => {
+    if (!sourceImage || !lockAspectCheck.checked) return;
+    const h = parseInt(resizeHeightInput.value, 10);
+    if (h > 0) {
+      const ratio = sourceImage.w / sourceImage.h;
+      resizeWidthInput.value = Math.max(1, Math.round(h * ratio));
+    }
+  });
+
   // ---------- conversion ----------
   convertBtn.addEventListener('click', () => {
     if (!sourceImage) return;
@@ -1477,11 +1544,15 @@
     const compress = compressSelect.value;
     const varName = (nameInput.value || 'image').replace(/[^a-zA-Z0-9_]/g, '_') || 'image';
 
+    const targetW = Math.max(1, parseInt(resizeWidthInput.value, 10) || sourceImage.w);
+    const targetH = Math.max(1, parseInt(resizeHeightInput.value, 10) || sourceImage.h);
+    const workingImage = resizeRGBA(sourceImage, targetW, targetH, smoothResizeCheck.checked);
+
     let exact = true;
     let uniqueColorCount = 0;
     if (cf.isIndexed) {
       const uniq = new Set();
-      const { w, h, rgba } = sourceImage;
+      const { w, h, rgba } = workingImage;
       for (let i = 0; i < w * h; i++) {
         const o = i * 4;
         uniq.add((rgba[o] << 24) | (rgba[o + 1] << 16) | (rgba[o + 2] << 8) | rgba[o + 3]);
@@ -1491,7 +1562,7 @@
     }
 
     const encoded = LVGLCore.encode({
-      cf, w: sourceImage.w, h: sourceImage.h, rgba: sourceImage.rgba,
+      cf, w: workingImage.w, h: workingImage.h, rgba: workingImage.rgba,
       background, dither, premultiply, align,
     });
 
